@@ -1,0 +1,1967 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>American High School Simulator /// 少女日常 v3.8</title>
+    
+    <!-- Fonts & Icons -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@700&family=Quicksand:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        :root {
+            --bg-color: #fdf6f9;
+            --panel-bg: rgba(255, 255, 255, 0.9);
+            --primary-color: #ff8fab;
+            --secondary-color: #a2d2ff;
+            --text-color: #5d5463;
+            --text-light: #a49daa;
+            --border-color: rgba(255, 143, 171, 0.2);
+            --twitter-blue: #1DA1F2;
+            --font-heading: 'Caveat', cursive;
+            --font-body: 'Quicksand', sans-serif;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            min-height: 100vh; background-color: #e9e3f1;
+            font-family: var(--font-body); color: var(--text-color);
+        }
+
+        .main-container {
+            width: 100%;
+            max-width: 900px;
+            min-height: 100vh;
+            margin: 0 auto;
+            background-color: var(--bg-color);
+            box-shadow: 0 10px 40px rgba(0,0,0,0.15);
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            overflow-x: hidden;
+        }
+        
+        .page-timestamp {
+            text-align: center;
+            font-size: 14px;
+            color: var(--primary-color);
+            font-weight: 700;
+            margin-bottom: 15px;
+            padding-top: 5px;
+        }
+
+        .main-view { flex-grow: 1; position: relative; }
+        .app-page {
+            position: absolute; top: 0; left: 0;
+            width: 100%; height: 100%;
+            opacity: 0; visibility: hidden;
+            transition: opacity 0.4s ease, visibility 0.4s;
+            overflow-y: auto; background-color: var(--bg-color);
+            display: flex;
+            flex-direction: column;
+        }
+        .app-page.active { opacity: 1; visibility: visible; }
+        .app-page::-webkit-scrollbar { display: none; }
+        .app-page-content { padding: 20px; flex-grow: 1; }
+
+        .app-header {
+            font-family: var(--font-heading);
+            font-size: 20px;
+            text-align: center;
+            margin-bottom: 20px;
+            position: relative;
+            padding-bottom: 8px;
+            background: linear-gradient(45deg, var(--primary-color), var(--secondary-color));
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            display: inline-block;
+            text-shadow: 0 0 8px rgba(255, 143, 171, 0.7);
+        }
+        .app-header::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 40px;
+            height: 3px;
+            background: linear-gradient(90deg, var(--secondary-color), var(--primary-color));
+            border-radius: 2px;
+        }
+
+        .info-card {
+            background: white; padding: 15px;
+            border-radius: 12px; margin-bottom: 15px;
+            border: 1px solid var(--border-color);
+            text-align: left;
+        }
+        .card-title { font-size: 17px; font-weight: 700; margin-bottom: 10px; }
+        .card-content { font-size: 12px; line-height: 1.7; color: var(--text-light); }
+        .back-button {
+            position: absolute; top: 15px; left: 15px; font-size: 15px; color: var(--text-light);
+            background: rgba(255,255,255,0.5); width: 30px; height: 30px;
+            display: flex; align-items: center; justify-content: center;
+            border-radius: 50%; cursor: pointer; z-index: 10;
+        }
+        .section-header {
+            font-weight: 700;
+            color: var(--text-light);
+            margin: 25px 0 10px;
+            text-align: center;
+            font-size: 13px;
+        }
+
+        /* --- [STORY SCREEN] --- */
+        .story-placeholder { text-align: center; color: var(--text-light); margin-top: 40px; font-size: 13px; }
+
+        /* --- Schedule Screen --- */
+        .date-weather-card { display: flex; justify-content: space-between; align-items: center; background: linear-gradient(135deg, #a2d2ff, #ff8fab); color: white; padding: 20px; border-radius: 15px; margin-bottom: 25px; box-shadow: 0 4px 15px rgba(162, 210, 255, 0.4); }
+        .date-info .day { font-size: 46px; font-weight: 700; line-height: 1; }
+        .date-info .month-year { font-size: 13px; font-weight: 500; opacity: 0.9; }
+        .weather-info { text-align: right; }
+        .weather-info .temperature { font-size: 26px; font-weight: 700; }
+        .weather-info .condition { font-size: 13px; opacity: 0.9; }
+        .schedule-item { display: flex; align-items: center; gap: 15px; }
+        .schedule-time { font-weight: 700; color: var(--primary-color); flex-shrink: 0; width: 70px; text-align: right; font-size: 12px; }
+        .schedule-details { border-left: 2px solid var(--border-color); padding-left: 15px; flex-grow: 1; }
+        .schedule-title { 
+            font-weight: 500;
+            font-size: 0.75em;
+        }
+        .event-card { font-size: 12px; padding: 12px 15px; }
+        .event-card .fa-bell { margin-right: 8px; color: var(--secondary-color); }
+
+        /* --- Phone Screen --- */
+        #phone-screen-app { overflow-y: hidden; }
+        #phone-screen-app > .app-page-content { overflow-y: auto; height: 100%; padding-top: 10px; }
+        .status-bar {
+            padding: 5px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 12px;
+            font-weight: 500;
+            flex-shrink: 0;
+            color: var(--text-color);
+        }
+        #twitter-screen .status-bar {
+            padding: 1px 15px;
+            font-size: 10px;
+        }
+        .status-icons { display: flex; gap: 8px; }
+        
+        .contacts-header {
+            display: flex;
+            justify-content: space-between; /* MODIFIED */
+            align-items: center;
+            margin-bottom: 15px;
+            padding-top: 5px;
+        }
+        .contacts-header-title {
+            font-size: 14px;
+            color: var(--primary-color);
+            font-weight: 700;
+            padding-left: 5px; /* MODIFIED */
+        }
+        .contacts-header-actions {
+            display: flex;
+            gap: 15px;
+            font-size: 15px; /* MODIFIED */
+            color: var(--text-light);
+            padding-right: 5px; 
+        }
+        .contacts-header-actions i { cursor: pointer; transition: color 0.2s ease; }
+        .contacts-header-actions i:hover { color: var(--primary-color); }
+        
+        .contact-entry { display: flex; align-items: center; gap: 15px; position: relative; }
+        .contact-link { cursor: pointer; }
+        .contact-avatar { width: 50px; height: 50px; border-radius: 50%; background-color: #eee; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 23px; font-family: var(--font-heading); color: var(--text-light); overflow: hidden; }
+        .contact-avatar img { width: 100%; height: 100%; object-fit: cover; }
+        .contact-name { font-weight: 700; font-size: 15px; display: flex; align-items: center; }
+        .contact-bio { font-size: 11px; color: var(--text-light); margin-top: 4px; }
+        
+        /* MODIFIED: Favor Bar & Progress Text */
+        .favor-progress-text {
+            font-size: 10px;
+            color: var(--primary-color);
+            font-weight: 700;
+            margin-bottom: 2px;
+            padding-right: 2px;
+            text-align: right;
+        }
+        .favor-bar {
+            background-color: #f0eaf8;
+            border-radius: 5px;
+            height: 6px;
+            /* margin-top: 8px; */ /* Removed margin to bring it closer to the text */
+            overflow: hidden;
+        }
+        .favor-level {
+            background: linear-gradient(90deg, var(--secondary-color), var(--primary-color));
+            height: 100%;
+            border-radius: 5px;
+            transition: width 0.5s ease-in-out;
+        }
+
+        .unread-badge-inline {
+            display: inline-flex; background-color: var(--primary-color); color: white;
+            width: 18px; height: 18px; border-radius: 50%; justify-content: center;
+            align-items: center; font-size: 9px; font-weight: 700; margin-left: 8px;
+        }
+
+        /* --- Chat Screen --- */
+        .chat-page-header-container {
+            background: white;
+            border-bottom: 1px solid var(--border-color);
+            flex-shrink: 0;
+        }
+        /* MODIFIED: Chat Status Bar */
+        .chat-page-header-container .status-bar {
+            padding: 1px 15px; /* MODIFIED: Made shorter */
+            font-size: 10px;
+        }
+        .chat-header { 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            padding: 10px 15px;
+            background: transparent;
+            border-bottom: none;
+            position: relative; 
+            flex-shrink: 0; 
+        }
+        .chat-header .back-button { position: absolute; top: 50%; transform: translateY(-50%); left: 15px; background: transparent; }
+        .chat-header-title { font-weight: 700; font-size: 17px; }
+        .chat-log { padding: 15px; display: flex; flex-direction: column; gap: 10px; flex-grow: 1; overflow-y: auto; } /* MODIFIED: gap */
+        .chat-log::-webkit-scrollbar { display: none; } /* ADDED TO HIDE SCROLLBAR IN CHAT LOG */
+        .chat-timestamp { text-align: center; font-size: 11px; color: var(--text-light); margin: 5px 0; }
+        
+        /* MODIFIED: Chat Bubble Layout */
+        .message-group { 
+            display: flex; 
+            flex-direction: row; 
+            align-items: flex-end; 
+            gap: 10px; 
+            max-width: 85%; /* Prevent bubbles from taking full width */
+        }
+        .message-group.received {
+            align-self: flex-start;
+        }
+        /* MODIFIED: Removed rule that hid subsequent avatars */
+
+        .chat-avatar-in-chat { width: 35px; height: 35px; border-radius: 50%; overflow: hidden; flex-shrink: 0; }
+        .chat-avatar-in-chat img { width: 100%; height: 100%; object-fit: cover; }
+        .chat-bubble { padding: 10px 15px; border-radius: 18px; max-width: 100%; font-size: 13px; line-height: 1.6; }
+        .chat-bubble.received { background-color: white; border: 1px solid var(--border-color); align-self: flex-start; border-bottom-left-radius: 4px; }
+        
+        /* --- Mirror Screen --- */
+        .stats-block-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+            row-gap: 15px;
+            padding-top: 5px;
+        }
+        .stat-item {
+            display: flex;
+            justify-content: flex-start; /* MODIFIED */
+            align-items: center;
+            font-size: 12px;
+            gap: 4px;
+        }
+        .stat-name { font-weight: 500; }
+        .stat-value { font-weight: 700; font-size: 13px; color: var(--primary-color); }
+        .personal-info-item { display: flex; justify-content: space-between; font-size: 13px; padding: 8px 0; border-bottom: 1px solid var(--border-color); }
+        .personal-info-item:last-child { border-bottom: none; }
+        .personal-info-card-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0 15px;
+        }
+        .personal-info-card-grid > .personal-info-item {
+            border-bottom: none;
+            padding: 6px 0;
+        }
+        .personal-info-card-grid > .personal-info-item:last-of-type {
+            grid-column: 1 / -1;
+            border-top: 1px solid var(--border-color);
+            margin-top: 6px;
+            padding-top: 10px;
+        }
+        .subject-grade-item { display: flex; justify-content: space-between; font-size: 13px; padding: 8px 5px; }
+        .grades-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 0 10px;
+        }
+        .grades-grid > .subject-grade-item {
+            padding: 6px 5px;
+        }
+        .subject-grade-item .grade-value { font-weight: 700; color: var(--primary-color); }
+        .action-button { width: 100%; padding: 12px; border-radius: 12px; border: none; background: linear-gradient(45deg, var(--primary-color), var(--secondary-color)); color: white; font-weight: 700; font-size: 15px; cursor: pointer; margin-top: 25px; }
+        
+        #outfit-title, #grades-title, #stats-title {
+            font-size: 15px;
+            text-align: center;
+            font-weight: 700;
+            background: linear-gradient(45deg, var(--primary-color), var(--secondary-color));
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            text-shadow: 0 0 5px rgba(255, 143, 171, 0.5);
+        }
+
+        /* --- Twitter Screen --- */
+        #twitter-screen > .app-page-content { padding: 0; }
+        
+        .twitter-sticky-header {
+            position: sticky;
+            top: 0;
+            z-index: 6;
+            background: rgba(253, 246, 249, 0.8);
+            backdrop-filter: blur(10px);
+        }
+        .twitter-top-bar { 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            padding: 8px 15px; 
+            border-bottom: 1px solid var(--border-color); 
+        }
+
+        .twitter-header-actions { display: flex; gap: 20px; align-items: center;}
+        .twitter-action-btn { 
+            font-size: 14px;
+            color: var(--text-light); 
+            cursor: pointer; 
+            transition: color 0.2s ease; 
+        }
+        .twitter-action-btn:hover { color: var(--twitter-blue); }
+        
+        .twitter-nav-header {
+            background: none !important; -webkit-background-clip: unset !important; background-clip: unset !important;
+            color: var(--text-light) !important; text-shadow: none !important;
+            margin-bottom: 0 !important; padding-bottom: 0 !important;
+            font-family: var(--font-body) !important;
+            font-size: 14px !important;
+            font-weight: 700 !important; display: flex !important;
+            align-items: center; gap: 8px; flex-grow: 1;
+            justify-content: center;
+            padding-left: 25px;
+        }
+        .twitter-nav-header::after { display: none !important; }
+        .twitter-nav-header .nav-item { color: var(--text-light); text-decoration: none; cursor: pointer; }
+        .twitter-nav-header .nav-item.active { color: var(--twitter-blue); display: flex; align-items: center; gap: 4px; }
+        .twitter-nav-header .nav-separator { color: var(--border-color); font-weight: 400; }
+
+        .tweet-card { display: flex; gap: 12px; padding: 15px; border-bottom: 1px solid var(--border-color); background: white; text-align: left; }
+        .tweet-author-link { cursor: pointer; text-decoration: none; color: inherit; }
+        .tweet-avatar { width: 45px; height: 45px; border-radius: 50%; background-color: #eee; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 22px; font-family: var(--font-heading); color: var(--text-light); overflow: hidden; }
+        .tweet-avatar img { width: 100%; height: 100%; object-fit: cover; }
+        .tweet-body { display: flex; flex-direction: column; width: 100%; }
+        .tweet-header { display: flex; align-items: baseline; gap: 5px; margin-bottom: 2px; }
+        .tweet-author { font-weight: 700; font-size: 14px; }
+        .tweet-handle { font-size: 12px; color: var(--text-light); }
+        
+        #twitter-screen .tweet-author,
+        #twitter-screen .tweet-handle,
+        #twitter-profile-page .profile-name,
+        #twitter-profile-page .profile-handle,
+        #twitter-profile-player .profile-name,
+        #twitter-profile-player .profile-handle {
+            color: var(--primary-color);
+        }
+
+        .tweet-content { font-size: 0.73em; line-height: 1.6; margin-bottom: 12px; white-space: pre-wrap; word-wrap: break-word; }
+        .tweet-hashtag { color: var(--twitter-blue); }
+        .tweet-actions { display: flex; justify-content: space-between; color: var(--text-light); font-size: 13px; }
+        .tweet-actions div { cursor: pointer; transition: color 0.2s ease; }
+        .tweet-actions div:hover { color: var(--twitter-blue); }
+        .tweet-actions .like:hover { color: #e0245e; }
+        .tweet-actions .like.liked { color: #e0245e; }
+        .tweet-actions i { margin-right: 5px; }
+
+        /* NEW: Tweet Image */
+        .tweet-image-container {
+            margin-bottom: 12px;
+            border-radius: 15px;
+            overflow: hidden;
+            border: 1px solid var(--border-color);
+        }
+        .tweet-image-container img {
+            width: 100%;
+            display: block;
+        }
+        
+        .poll-container { margin-top: 10px; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+        .poll-title { font-weight: 700; margin-bottom: 5px; font-size: 14px; grid-column: 1 / -1; }
+        .poll-option { background: #f7f9fa; border: 1px solid #e1e8ed; border-radius: 8px; padding: 8px 12px; cursor: pointer; font-weight: 500; font-size: 12px; text-align: center; }
+
+        /* --- Twitter Profile Page --- */
+        #twitter-profile-page .app-page-content, #twitter-profile-player .app-page-content { padding: 0; text-align: left; }
+        .profile-header-bg { height: 120px; background: linear-gradient(45deg, var(--secondary-color), var(--primary-color)); }
+        .profile-details { padding: 15px; margin-top: -50px; position: relative; }
+        .profile-avatar { width: 80px; height: 80px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 38px; font-family: var(--font-heading); border: 4px solid var(--bg-color); margin-bottom: 10px; overflow: hidden; background-color: var(--primary-color); color: white;}
+        .profile-avatar img { width: 100%; height: 100%; object-fit: cover; }
+        .profile-name { font-size: 21px; font-weight: 700; }
+        .profile-handle { font-size: 13px; color: var(--text-light); margin-bottom: 15px; }
+        .profile-stats { font-size: 13px; margin-bottom: 15px; display: flex; gap: 20px; }
+        .profile-stats span { font-weight: 700; color: var(--text-color); }
+        .profile-bio { font-size: 13px; line-height: 1.6; }
+        .profile-tweets-section { padding-top: 15px; border-top: 1px solid var(--border-color); margin-top: 15px; text-align: center; color: var(--text-light); font-size: 13px; }
+
+        /* --- Modal Styling --- */
+        .modal-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: none; justify-content: center; align-items: center; z-index: 1000; }
+        .modal-content { background: white; padding: 20px; border-radius: 15px; width: 85%; max-width: 400px; text-align: center; position: relative; }
+        .modal-close { position: absolute; top: 10px; right: 10px; cursor: pointer; font-size: 17px; color: var(--text-light); }
+        .modal-avatar { width: 70px; height: 70px; border-radius: 50%; margin: 0 auto 10px; overflow: hidden; }
+        .modal-avatar img { width: 100%; height: 100%; object-fit: cover; }
+        .modal-name { font-size: 19px; font-weight: 700; margin-bottom: 5px; }
+        .modal-age { font-size: 13px; color: var(--text-light); margin-bottom: 15px; }
+        .modal-bio { font-size: 13px; line-height: 1.6; }
+
+        /* --- Notification Modal --- */
+        .notification-modal-overlay {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            display: none;
+            justify-content: center;
+            align-items: flex-start;
+            padding-top: 80px;
+            z-index: 2000;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.4s ease;
+        }
+        .notification-modal-overlay.show {
+            display: flex;
+            opacity: 1;
+        }
+        .notification-modal-content {
+            color: white;
+            padding: 12px 20px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 500;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .twitter-notification {
+             background: var(--twitter-blue);
+        }
+        .contacts-notification {
+            background: var(--primary-color);
+        }
+
+        /* --- NEW: Global Input Bar --- */
+        .global-input-bar {
+            display: flex;
+            padding: 5px 12px;
+            border-top: 1px solid var(--border-color);
+            background: white;
+            flex-shrink: 0;
+            align-items: center;
+            gap: 8px;
+        }
+        .global-input-bar input {
+            flex-grow: 1;
+            border: none;
+            outline: none;
+            background: #f7f7f7;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+        }
+        .global-input-bar button {
+            border: none;
+            background: none;
+            font-size: 17px;
+            color: var(--primary-color);
+            cursor: pointer;
+            padding: 0;
+            flex-shrink: 0;
+        }
+        .global-input-bar button.refresh-btn {
+            color: var(--text-light);
+            font-size: 15px;
+        }
+        /* ADDED: Disabled state for send button */
+        .global-input-bar button:disabled {
+            color: var(--text-light);
+            cursor: not-allowed;
+        }
+
+        /* --- App Dock --- */
+        .app-dock { 
+            flex-shrink: 0; 
+            height: 55px; /* MODIFIED */
+            background: rgba(255,255,255,0.6); 
+            backdrop-filter: blur(10px); 
+            border-top: 1px solid var(--border-color); 
+            display: flex; 
+            justify-content: space-around; 
+            align-items: center; 
+        }
+        .dock-icon { display: flex; flex-direction: column; align-items: center; gap: 4px; font-size: 8px; /* MODIFIED */ font-weight: 500; color: var(--text-light); cursor: pointer; transition: color 0.2s ease; text-decoration: none; position: relative; }
+        .dock-icon i { font-size: 19px; /* MODIFIED */ }
+        .dock-icon:hover, .dock-icon.active { color: var(--primary-color); }
+        .dock-icon[data-target="twitter-screen"]:hover, .dock-icon[data-target="twitter-screen"].active { color: var(--twitter-blue); }
+
+        .info-card, .tweet-card, .action-button, .poll-option, .contact-link {
+            transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+        }
+
+        .info-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(93, 84, 99, 0.1);
+            z-index: 2;
+            position: relative;
+        }
+        
+        .contact-link:hover {
+            background-color: #fff8fb;
+            transform: translateY(-2px);
+        }
+
+        .action-button:hover {
+            transform: scale(1.05);
+            filter: brightness(1.15);
+            box-shadow: 0 4px 15px rgba(255, 143, 171, 0.4);
+        }
+        
+        /* MODIFIED: Dock icon hover effect */
+        .dock-icon:hover::after {
+            content: '';
+            position: absolute;
+            width: 5px;
+            height: 5px;
+            background-color: currentColor;
+            border-radius: 50%;
+            right: 8px;
+            bottom: 2px;
+        }
+
+        .poll-option:hover {
+            background-color: #eaf5ff;
+            border-color: var(--secondary-color);
+            transform: scale(1.03);
+            color: var(--twitter-blue);
+        }
+    </style>
+    
+    <!-- Story Page Specific Styles -->
+    <style>
+        #story-screen {
+            background: var(--bg-color);
+        }
+        .player-stats-hs {
+            padding: 5px 15px; /* MODIFIED */
+            background: rgba(255, 255, 255, 0.7);
+            border-bottom: 1px solid var(--border-color);
+            position: sticky; top: 0; z-index: 10;
+            backdrop-filter: blur(8px);
+            flex-shrink: 0;
+        }
+        .player-header-hs { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 5px; font-size: 12px; } /* MODIFIED */
+        .player-info-hs { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; } /* ADDED flex-wrap */
+        /* CHANGE 3: Removed special font */
+        .player-info-hs .username { font-size: 18px; color: var(--text-color); } /* MODIFIED */
+        
+        /* MODIFIED: Player tag styling */
+        .player-info-hs .level { 
+            background: var(--border-color); 
+            padding: 2px 5px; 
+            border-radius: 5px; 
+            font-weight: 700; 
+            color: var(--primary-color);
+            font-size: 9px; /* MODIFIED: Size consistency */
+        }
+        .player-tag {
+            font-size: 9px;
+            background: var(--border-color); /* MODIFIED: Color change */
+            padding: 2px 5px;
+            border-radius: 5px;
+            font-weight: 700;
+            color: var(--primary-color); /* MODIFIED: Color change */
+        }
+
+        .attributes-hs { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px 8px; font-size: 11px; }
+        .attr-hs { display: flex; justify-content: space-between; align-items: center; }
+        .attr-name-hs { color: var(--text-light); } .attr-name-hs span { margin-left: 2px; }
+        /* CHANGE 1: Removed bold effect */
+        .attr-value-hs { font-weight: 500; color: var(--text-color); }
+
+        .content-panel-hs {
+            padding: 15px; overflow-y: auto; flex-grow: 1;
+        }
+        .content-panel-hs::-webkit-scrollbar { width: 4px; }
+        .content-panel-hs::-webkit-scrollbar-track { background: transparent; }
+        .content-panel-hs::-webkit-scrollbar-thumb { background: var(--primary-color); border-radius: 2px; }
+
+        /* MODIFIED: Scene info layout */
+        .scene-info-container-hs { 
+            display: flex; 
+            justify-content: space-between; 
+            gap: 8px; 
+            margin-bottom: 20px; 
+            flex-wrap: wrap;
+            row-gap: 8px;
+        }
+        .info-box-hs { 
+            background: var(--panel-bg); 
+            border: 1px solid var(--border-color); 
+            padding: 5px 10px; 
+            border-radius: 15px; 
+            font-size: 11px; 
+            display: flex; 
+            align-items: center; 
+            gap: 6px; 
+            justify-content: center; 
+            font-weight: 500;
+            flex-grow: 1;
+            flex-basis: calc(50% - 4px);
+        }
+        /* CHANGE 1: Icon color */
+        .info-box-hs i {
+            color: var(--primary-color);
+        }
+        .info-box-hs:last-child {
+            flex-basis: 100%;
+        }
+
+        .narration-box-hs { background: rgba(255, 255, 255, 0.6); border-left: 3px solid var(--secondary-color); padding: 12px; margin-bottom: 15px; font-style: italic; color: var(--text-light); font-size: 12px; line-height: 1.7; border-radius: 0 8px 8px 0; }
+        
+        /* MODIFIED: Dialogue box layout */
+        .dialogue-box-hs { 
+            background: white; border: 1px solid var(--border-color); padding: 12px; margin-bottom: 15px; border-radius: 12px; box-shadow: 0 4px 10px rgba(93, 84, 99, 0.05);
+            display: flex; 
+            flex-direction: column; /* Changed for separation */
+            gap: 0;
+            align-items: stretch;
+        }
+        /* CHANGE 2: Make speaker info flatter */
+        .dialogue-speaker-info {
+            display: flex;
+            gap: 10px;
+            align-items: center; /* MODIFIED */
+        }
+        .dialogue-body-container {
+            border-top: 1px solid var(--border-color);
+            margin-top: 12px;
+            padding-top: 12px;
+        }
+
+        .dialogue-avatar-hs {
+            width: 40px; height: 40px;
+            border-radius: 50%;
+            overflow: hidden;
+            flex-shrink: 0;
+        }
+        .dialogue-avatar-hs img { width: 100%; height: 100%; object-fit: cover; }
+        .self-dialogue .dialogue-avatar-hs {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: rgba(162, 210, 255, 0.2);
+            color: var(--secondary-color);
+            font-size: 18px;
+        }
+        .dialogue-content-hs { flex-grow: 1; }
+        /* CHANGE 2: Make speaker info flatter */
+        .dialogue-header-hs { font-family: var(--font-body); font-size: 14px; margin-bottom: 0; font-weight: 700; display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; } /* MODIFIED */
+        .dialogue-body-hs p { font-size: 13px; line-height: 1.6; color: var(--text-color); }
+        .dialogue-body-hs p:not(:last-child) { margin-bottom: 8px; }
+        .char-npc .dialogue-header-hs { color: var(--primary-color); }
+        .self-dialogue .dialogue-header-hs { color: var(--secondary-color); }
+        
+        .choices-container-hs { display: grid; grid-template-columns: 1fr; gap: 10px; margin: 20px 0; }
+        
+        /* MODIFICATION 1: Changed choice button colors */
+        .choice-button-hs { 
+            width: 100%; 
+            padding: 12px; 
+            background: transparent; 
+            border: 1px solid var(--primary-color); 
+            color: var(--text-color); /* MODIFIED */
+            text-align: left; 
+            font-family: var(--font-body); 
+            font-size: 12px; 
+            font-weight: 500; /* MODIFIED: Was 700 */
+            cursor: pointer; 
+            transition: all 0.3s ease; 
+            border-radius: 8px; 
+        }
+        .choice-button-hs:hover { background: rgba(255, 143, 171, 0.15); }
+        
+        .divider-hs { border: none; height: 1px; background: linear-gradient(to right, transparent, var(--border-color), transparent); margin: 20px 0; }
+        
+        .char-tags-container-hs { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 2px; }
+        .char-tag-hs { font-size: 9px; background-color: rgba(255, 143, 171, 0.1); color: var(--primary-color); padding: 2px 6px; border-radius: 10px; font-family: var(--font-body); border: 1px solid var(--border-color); font-weight: 700; }
+        
+        .quest-update-box { 
+            background: rgba(162, 210, 255, 0.1); 
+            border: 1px dashed var(--secondary-color);
+            padding: 10px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            text-align: center;
+            font-size: 12px;
+            font-weight: 700;
+            color: #6b9ac4;
+            animation: soft-pulse 2.5s infinite;
+        }
+        @keyframes soft-pulse {
+            0% { box-shadow: 0 0 0 0 rgba(162, 210, 255, 0.3); }
+            70% { box-shadow: 0 0 0 8px rgba(162, 210, 255, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(162, 210, 255, 0); }
+        }
+    </style>
+    <!-- Achievements Screen Specific Styles -->
+    <style>
+        #mirror-screen .app-page-content {
+            padding-top: 10px;
+        }
+        .achievement-card {
+            background: white; padding: 15px;
+            border-radius: 12px; margin-bottom: 12px;
+            border: 1px solid var(--border-color);
+            display: flex; align-items: center; gap: 15px;
+            transition: all 0.3s ease;
+        }
+        .achievement-card.locked {
+            background: rgba(255, 255, 255, 0.7);
+        }
+        .achievement-card.locked .achievement-details {
+            opacity: 0.5;
+        }
+        .achievement-icon {
+            font-size: 24px;
+            width: 50px; height: 50px;
+            display: flex; justify-content: center; align-items: center;
+            border-radius: 50%;
+            background-color: var(--border-color);
+            color: var(--primary-color);
+            flex-shrink: 0;
+        }
+        .achievement-card.locked .achievement-icon {
+            background-color: #e9e3f1;
+            color: var(--text-light);
+        }
+        /* MODIFICATION 2: Changed achievement title layout */
+        .achievement-title {
+            font-weight: 700;
+            font-size: 15px;
+            margin-bottom: 5px;
+            display: flex;
+            align-items: baseline;
+            /* MODIFIED: gap: 8px; */
+        }
+        .achievement-desc {
+            font-size: 12px;
+            color: var(--text-light);
+        }
+        /* MODIFICATION 2: Changed timestamp style */
+        .achievement-timestamp {
+            font-size: 9px;
+            color: var(--text-light);
+            font-weight: 400;
+            margin-left: 8px; /* ADDED */
+        }
+    </style>
+    <!-- NEW: Settings Screen & Setup Screen Specific Styles -->
+    <style>
+        .settings-form-group {
+            margin-bottom: 20px;
+        }
+        .settings-form-group:last-of-type {
+            margin-bottom: 0;
+        }
+        .settings-form-group label {
+            display: block;
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--text-color);
+            margin-bottom: 8px;
+            text-align: left;
+        }
+        .settings-form-group input,
+        .settings-form-group select,
+        .settings-form-group textarea { /* ADDED TEXTAREA */
+            width: 100%;
+            border: 1px solid var(--border-color);
+            outline: none;
+            background: #fdfcff;
+            padding: 10px 12px;
+            border-radius: 8px;
+            font-size: 13px;
+            font-family: var(--font-body);
+            color: var(--text-color);
+            transition: border-color 0.2s ease, box-shadow 0.2s ease;
+            resize: vertical; /* Allow textarea resizing */
+        }
+        .settings-form-group textarea {
+            min-height: 60px;
+        }
+        .settings-form-group input:focus,
+        .settings-form-group select:focus,
+        .settings-form-group textarea:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(255, 143, 171, 0.2);
+        }
+        .settings-form-group select {
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='%23a49daa' viewBox='0 0 16 16'%3E%3Cpath fill-rule='evenodd' d='M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708z'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 12px center;
+            background-size: 16px;
+            cursor: pointer;
+        }
+        #settings-screen .info-card,
+        #setup-screen .info-card { /* ADDED SETUP SCREEN */
+            padding: 20px;
+        }
+        /* ADDED: Small text for hints */
+        .input-hint {
+            font-size: 11px;
+            color: var(--text-light);
+            text-align: left;
+            margin-top: 5px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="main-container">
+        
+        <main class="main-view">
+
+            <!-- ====================================================== -->
+            <!-- == NEW: SETUP SCREEN (CHARACTER & API CONFIGURATION)  == -->
+            <!-- ====================================================== -->
+            <!-- *** FIXED: Added 'active' class to make this the default visible page *** -->
+            <div id="setup-screen" class="app-page active">
+                <div class="app-page-content">
+                    <div style="text-align: center; margin-bottom: 20px;">
+                        <h1 class="app-header">游戏开始设置</h1>
+                    </div>
+                    
+                    <div class="info-card">
+                        <h2 class="card-title" style="text-align: center;">角色创建</h2>
+                        <div class="settings-form-group">
+                            <label for="setup-player-name">你的名字</label>
+                            <input type="text" id="setup-player-name" name="setup-player-name" value="Player">
+                        </div>
+                        <div class="settings-form-group">
+                            <label for="setup-player-appearance">外貌描述</label>
+                            <textarea id="setup-player-appearance" name="setup-player-appearance" placeholder="例如：拥有淡金色的长发和一双天空般澄澈的蓝色眼睛，看起来有些文静。"></textarea>
+                        </div>
+                        <div class="settings-form-group">
+                            <label for="setup-player-personality">性格特点</label>
+                            <textarea id="setup-player-personality" name="setup-player-personality" placeholder="例如：外表冷淡，内心敏感，不善于表达自己的真实情感，但对朋友非常真诚。"></textarea>
+                        </div>
+                        <div class="settings-form-group">
+                            <label for="setup-player-background">身份背景</label>
+                            <textarea id="setup-player-background" name="setup-player-background" placeholder="例如：来自一个普通的中产家庭，父母关系和睦，有一个在大学的哥哥。"></textarea>
+                        </div>
+                         <div class="settings-form-group">
+                            <label for="setup-player-relations">重要社交关系</label>
+                            <textarea id="setup-player-relations" name="setup-player-relations" placeholder="例如：和莉莉是从小一起长大的青梅竹马，关系非常亲密。和继兄西维恩住在一起，但关系有些微妙。"></textarea>
+                        </div>
+                    </div>
+
+                    <div class="info-card">
+                        <h2 class="card-title" style="text-align: center;">模型接口设置</h2>
+                         <div class="settings-form-group">
+                            <label for="setup-api-endpoint">【API接口】</label>
+                            <input type="text" id="setup-api-endpoint" name="setup-api-endpoint" placeholder="例如: https://api.openai.com/v1">
+                        </div>
+                        <div class="settings-form-group">
+                            <label for="setup-api-key">【API密钥】</label>
+                            <input type="password" id="setup-api-key" name="setup-api-key" placeholder="请输入你的API密钥">
+                        </div>
+                        <div class="settings-form-group">
+                            <label for="setup-model-name">【模型】</label>
+                            <input type="text" id="setup-model-name" name="setup-model-name" placeholder="例如: gpt-4-turbo">
+                        </div>
+                        <p class="input-hint">提示：这些设置将被保存在你的浏览器本地，不会上传到任何服务器。你也可以在游戏内的“手机”->“设置”中随时修改。</p>
+                    </div>
+
+                    <button class="action-button" id="start-game-button">进入游戏世界</button>
+
+                    <details class="system-notice-details" style="margin-top: 20px;">
+                      <summary style="font-size: 8px; color: var(--primary-color); text-align: center;">!注意</summary>
+                      <div class="notice-content" style="font-size: 8px; color: var(--primary-color);">
+                        <ol style="margin: 5px 0; padding-left: 20px;">
+                          <li>本指令为神无月原创，不要进行照搬抄袭和盗版等行为，本人账号仅有小红书和抖音，其余平台一律是盗版贩子</li>
+                        </ol>
+                      </div>
+                    </details>
+                </div>
+            </div>
+
+
+            <!-- Story Screen (Default) -->
+            <!-- *** FIXED: Removed 'active' class. This page is now hidden by default *** -->
+            <div id="story-screen" class="app-page">
+                <header class="player-stats-hs">
+                    <div class="player-header-hs">
+                        <!-- MODIFIED: Added IDs for dynamic updates -->
+                        <div class="player-info-hs">
+                            <span class="username" id="player-name-display">Player</span>
+                            <span class="level">新生</span>
+                            <span class="player-tag" id="player-appearance-tag">外貌: ???</span>
+                            <span class="player-tag" id="player-personality-tag">性格: ???</span>
+                        </div>
+                        <span class="currency">$0</span>
+                    </div>
+                    <div class="attributes-hs">
+                        <div class="attr-hs"><span class="attr-name-hs">🍎生命</span><span class="attr-value-hs">00</span></div>
+                        <div class="attr-hs"><span class="attr-name-hs">💔压力</span><span class="attr-value-hs">00</span></div>
+                        <div class="attr-hs"><span class="attr-name-hs">🍰心情</span><span class="attr-value-hs">00</span></div>
+                        <div class="attr-hs"><span class="attr-name-hs">🍙体魄</span><span class="attr-value-hs">00</span></div>
+                        <div class="attr-hs"><span class="attr-name-hs">🧠智力</span><span class="attr-value-hs">00</span></div>
+                        <div class="attr-hs"><span class="attr-name-hs">💬社交</span><span class="attr-value-hs">00</span></div>
+                        <div class="attr-hs"><span class="attr-name-hs">✨魅力</span><span class="attr-value-hs">00</span></div>
+                        <div class="attr-hs"><span class="attr-name-hs">🍀运气</span><span class="attr-value-hs">00</span></div>
+                    </div>
+                </header>
+
+                <main class="content-panel-hs" id="story-content-panel">
+                    
+                    <div class="scene-info-container-hs">
+                        <div class="info-box-hs"><i class="fas fa-map-marker-alt"></i><span>地点: 教学楼走廊</span></div>
+                        <div class="info-box-hs"><i class="fas fa-clock"></i><span>时间: 上午 10:00</span></div>
+                        <div class="info-box-hs"><i>🎀</i><span>衣着: 夏季校服</span></div>
+                    </div>
+
+                    <div class="narration-box-hs">
+                        <p>开学典礼刚刚结束，走廊里瞬间被喧闹的人潮填满。空气中弥漫着新书本的油墨味和少年少女们身上淡淡的香水味，一切都充满了崭新的气息。你穿梭在人群中，看着那些或熟悉或陌生的面孔，心中涌起一丝对新学期的期待。</p>
+                        <p>就在这时，一个熟悉的身影挤开人群，带着些许焦急的神色朝你跑来。是你的青梅，莉莉。</p>
+                    </div>
+
+                    <div class="dialogue-box-hs char-npc">
+                        <div class="dialogue-speaker-info">
+                            <div class="dialogue-avatar-hs">
+                                <img src="https://tc.z.wiki/autoupload/f/e1MqST8isN3BorZ9vl5wjMH-Rbcbu0PmzOeNUaCE-deyl5f0KlZfm6UsKj-HyTuv/20250907/2MyR/895X895/1757256685270_edit_1148797258847100.png" alt="莉莉">
+                            </div>
+                            <div class="dialogue-content-hs">
+                                <div class="dialogue-header-hs">
+                                    <span>莉莉</span>
+                                    <div class="char-tags-container-hs">
+                                        <span class="char-tag-hs">青梅</span>
+                                        <span class="char-tag-hs">文静</span>
+                                        <span class="char-tag-hs">优等生</span>
+                                        <span class="char-tag-hs">好感: 60</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="dialogue-body-container">
+                            <div class="dialogue-body-hs">
+                                <p>“啊，你终于来了！我给你发了好多消息......”</p>
+                                <p>她跑到你面前，微微喘着气，白皙的脸颊泛着红晕。</p>
+                                <p>“我，我还在为社团的事情烦恼。大家都好像有自己的目标了，只有我......”</p>
+                                <p>她有些不安地绞着手指，蓝色的眼眸里写满了犹豫。</p>
+                                <p>“你决定好了吗？我想和你一起......可以吗？”</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="dialogue-box-hs self-dialogue">
+                        <div class="dialogue-content-hs">
+                            <div class="dialogue-header-hs">提示</div>
+                            <div class="dialogue-body-hs">
+                                <p>莉莉似乎非常在意你的选择。不同的回应可能会影响她对你的好感度，以及她未来的社团方向。你可以通过下方的输入框做出你的选择或回应。</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <hr class="divider-hs">
+                    <details class="system-notice-details">
+                      <summary style="font-size: 8px; color: var(--primary-color); text-align: center;">!注意</summary>
+                      <div class="notice-content" style="font-size: 8px; color: var(--primary-color);">
+                        <ol style="margin: 5px 0; padding-left: 20px;">
+                          <li>本指令为神无月原创，不要进行照搬抄袭和盗版等行为，本人账号仅有小红书和抖音，其余平台一律是盗版贩子</li>
+                        </ol>
+                      </div>
+                    </details>
+                </main>
+            </div>
+            
+            <!-- Schedule Screen -->
+            <div id="schedule-screen" class="app-page">
+                <div class="app-page-content">
+                    <div style="text-align: center;"><h1 class="app-header">Schedule</h1></div>
+                    <div class="date-weather-card">
+                        <div class="date-info"><div class="day">05</div><div class="month-year">九月, 星期一</div></div>
+                        <div class="weather-info"><div class="temperature">24°</div><div class="condition">晴 ☀️ 纽约</div></div>
+                    </div>
+                    <div class="info-card schedule-item"><div class="schedule-time">08:30 AM</div><div class="schedule-details"><div class="schedule-title">开学典礼</div></div></div>
+                    <div class="info-card schedule-item"><div class="schedule-time">10:00 AM</div><div class="schedule-details"><div class="schedule-title">文学史</div></div></div>
+                    <div class="info-card schedule-item"><div class="schedule-time">11:00 AM</div><div class="schedule-details"><div class="schedule-title">数学</div></div></div>
+                    <div class="info-card schedule-item"><div class="schedule-time">01:30 PM</div><div class="schedule-details"><div class="schedule-title">艺术鉴赏</div></div></div>
+                    <div class="info-card schedule-item"><div class="schedule-time">02:30 PM</div><div class="schedule-details"><div class="schedule-title">物理</div></div></div>
+                    <div class="info-card schedule-item"><div class="schedule-time">04:00 PM</div><div class="schedule-details"><div class="schedule-title">社团活动</div></div></div>
+                    <div class="section-header">近期事件提醒</div>
+                    <div class="info-card event-card"><i class="fas fa-bell"></i> <b>本周五:</b> 新生舞会</div>
+                    <div class="info-card event-card"><i class="fas fa-bell"></i> <b>下周一:</b> 开学摸底考</div>
+                    <details class="system-notice-details">
+                      <summary style="font-size: 8px; color: var(--primary-color); text-align: center;">!注意</summary>
+                      <div class="notice-content" style="font-size: 8px; color: var(--primary-color);">
+                        <ol style="margin: 5px 0; padding-left: 20px;">
+                          <li>本指令为神无月原创，不要进行照搬抄袭和盗版等行为，本人账号仅有小红书和抖音，其余平台一律是盗版贩子</li>
+                        </ol>
+                      </div>
+                    </details>
+                </div>
+            </div>
+
+            <!-- Phone Screen -->
+            <div id="phone-screen-app" class="app-page">
+                <div class="status-bar">
+                    <span class="time">8:00</span>
+                    <div class="status-icons">
+                        <i class="fas fa-signal"></i>
+                        <i class="fas fa-wifi"></i>
+                        <i class="fas fa-battery-full"></i>
+                    </div>
+                </div>
+                <div class="app-page-content">
+                    <div class="contacts-header">
+                        <div class="contacts-header-title">联系人</div>
+                        <div class="contacts-header-actions">
+                            <i class="fas fa-users" id="create-group-btn"></i>
+                            <i class="fas fa-user-plus" id="add-friend-btn"></i>
+                            <i class="fas fa-cog" id="settings-btn"></i>
+                        </div>
+                    </div>
+                    <div class="info-card contact-entry contact-link" data-target="chat-screen-lily">
+                        <div class="contact-avatar"><img src="https://tc.z.wiki/autoupload/f/e1MqST8isN3BorZ9vl5wjMH-Rbcbu0PmzOeNUaCE-deyl5f0KlZfm6UsKj-HyTuv/20250907/2MyR/895X895/1757256685270_edit_1148797258847100.png" alt="莉莉"></div>
+                        <div class="contact-details">
+                            <div class="contact-name">
+                                莉莉 <span class="unread-badge-inline">6</span>
+                            </div>
+                            <div class="favor-progress-text">好感 60/100</div>
+                            <div class="favor-bar">
+                                <div class="favor-level" style="width: 60%;"></div>
+                            </div>
+                            <div class="contact-bio">17岁，紫发蓝眼的文静少女，你的青梅，和你从小就是好朋友，她的学习很好，但因为有些软弱的性格总被人针对</div>
+                        </div>
+                    </div>
+                    <div class="info-card contact-entry contact-link" data-target="chat-screen-sivien">
+                        <div class="contact-avatar"><img src="https://tc.z.wiki/autoupload/f/e1MqST8isN3BorZ9vl5wjMH-Rbcbu0PmzOeNUaCE-deyl5f0KlZfm6UsKj-HyTuv/20250908/0xHF/2048X2048/33554273-608c-4628-93d1-68136e043317.jpeg/webp" alt="西维恩"></div>
+                        <div class="contact-details">
+                            <div class="contact-name">西维恩 <span class="unread-badge-inline">4</span></div>
+                            <div class="favor-progress-text">好感 50/100</div>
+                            <div class="favor-bar">
+                                <div class="favor-level" style="width: 50%;"></div>
+                            </div>
+                            <div class="contact-bio">24岁，你的继兄，虔诚的教徒，也是你们学校的校医。你总觉得他有些难以捉摸，但其实他也总琢磨不透你的心思</div>
+                        </div>
+                    </div>
+                    <details class="system-notice-details">
+                      <summary style="font-size: 8px; color: var(--primary-color); text-align: center;">!注意</summary>
+                      <div class="notice-content" style="font-size: 8px; color: var(--primary-color);">
+                        <ol style="margin: 5px 0; padding-left: 20px;">
+                          <li>本指令为神无月原创，不要进行照搬抄袭和盗版等行为，本人账号仅有小红书和抖音，其余平台一律是盗版贩子</li>
+                        </ol>
+                      </div>
+                    </details>
+                </div>
+            </div>
+
+            <!-- Chat Screen for Lily -->
+            <div id="chat-screen-lily" class="app-page">
+                <div class="chat-page-header-container">
+                    <div class="status-bar">
+                        <span class="time">8:01</span>
+                        <div class="status-icons"><i class="fas fa-signal"></i><i class="fas fa-wifi"></i><i class="fas fa-battery-full"></i></div>
+                    </div>
+                    <div class="chat-header">
+                        <a class="back-button back-to-contacts"><i class="fas fa-arrow-left"></i></a>
+                        <div class="chat-header-title">莉莉</div>
+                    </div>
+                </div>
+                <div class="chat-log">
+                    <div class="chat-timestamp">7:40</div>
+                    <div class="message-group received">
+                        <div class="chat-avatar-in-chat"><img src="https://tc.z.wiki/autoupload/f/e1MqST8isN3BorZ9vl5wjMH-Rbcbu0PmzOeNUaCE-deyl5f0KlZfm6UsKj-HyTuv/20250907/2MyR/895X895/1757256685270_edit_1148797258847100.png" alt="莉莉"></div>
+                        <div class="chat-bubble received">你到学校了吗？</div>
+                    </div>
+                    <div class="message-group received">
+                        <div class="chat-avatar-in-chat"><img src="https://tc.z.wiki/autoupload/f/e1MqST8isN3BorZ9vl5wjMH-Rbcbu0PmzOeNUaCE-deyl5f0KlZfm6UsKj-HyTuv/20250907/2MyR/895X895/1757256685270_edit_1148797258847100.png" alt="莉莉"></div>
+                        <div class="chat-bubble received">我正在犹豫报什么社团…</div>
+                    </div>
+                    <div class="message-group received">
+                        <div class="chat-avatar-in-chat"><img src="https://tc.z.wiki/autoupload/f/e1MqST8isN3BorZ9vl5wjMH-Rbcbu0PmzOeNUaCE-deyl5f0KlZfm6UsKj-HyTuv/20250907/2MyR/895X895/1757256685270_edit_1148797258847100.png" alt="莉莉"></div>
+                        <div class="chat-bubble received">好苦恼</div>
+                    </div>
+                    <div class="message-group received">
+                        <div class="chat-avatar-in-chat"><img src="https://tc.z.wiki/autoupload/f/e1MqST8isN3BorZ9vl5wjMH-Rbcbu0PmzOeNUaCE-deyl5f0KlZfm6UsKj-HyTuv/20250907/2MyR/895X895/1757256685270_edit_1148797258847100.png" alt="莉莉"></div>
+                        <div class="chat-bubble received">文学社团还是天文社团呢</div>
+                    </div>
+                    <div class="message-group received">
+                        <div class="chat-avatar-in-chat"><img src="https://tc.z.wiki/autoupload/f/e1MqST8isN3BorZ9vl5wjMH-Rbcbu0PmzOeNUaCE-deyl5f0KlZfm6UsKj-HyTuv/20250907/2MyR/895X895/1757256685270_edit_1148797258847100.png" alt="莉莉"></div>
+                        <div class="chat-bubble received">对了，你选了什么社团？我想跟你一起</div>
+                    </div>
+                    <div class="message-group received">
+                        <div class="chat-avatar-in-chat"><img src="https://tc.z.wiki/autoupload/f/e1MqST8isN3BorZ9vl5wjMH-Rbcbu0PmzOeNUaCE-deyl5f0KlZfm6UsKj-HyTuv/20250907/2MyR/895X895/1757256685270_edit_1148797258847100.png" alt="莉莉"></div>
+                        <div class="chat-bubble received">可以吗？</div>
+                    </div>
+                    <details class="system-notice-details" style="margin-top: 15px;">
+                      <summary style="font-size: 8px; color: var(--primary-color); text-align: center;">!注意</summary>
+                      <div class="notice-content" style="font-size: 8px; color: var(--primary-color);">
+                        <ol style="margin: 5px 0; padding-left: 20px;">
+                          <li>本指令为神无月原创，不要进行照搬抄袭和盗版等行为，本人账号仅有小红书和抖音，其余平台一律是盗版贩子</li>
+                        </ol>
+                      </div>
+                    </details>
+                </div>
+            </div>
+
+            <!-- Chat Screen for Sivien -->
+            <div id="chat-screen-sivien" class="app-page">
+                <div class="chat-page-header-container">
+                    <div class="status-bar">
+                        <span class="time">8:01</span>
+                        <div class="status-icons"><i class="fas fa-signal"></i><i class="fas fa-wifi"></i><i class="fas fa-battery-full"></i></div>
+                    </div>
+                    <div class="chat-header">
+                        <a class="back-button back-to-contacts"><i class="fas fa-arrow-left"></i></a>
+                        <div class="chat-header-title">西维恩</div>
+                    </div>
+                </div>
+                <div class="chat-log">
+                    <div class="chat-timestamp">7:30</div>
+                    <div class="message-group received">
+                        <div class="chat-avatar-in-chat"><img src="https://tc.z.wiki/autoupload/f/e1MqST8isN3BorZ9vl5wjMH-Rbcbu0PmzOeNUaCE-deyl5f0KlZfm6UsKj-HyTuv/20250908/0xHF/2048X2048/33554273-608c-4628-93d1-68136e043317.jpeg/webp" alt="西维恩"></div>
+                        <div class="chat-bubble received">早上你没喝牛奶</div>
+                    </div>
+                     <div class="message-group received">
+                        <div class="chat-avatar-in-chat"><img src="https://tc.z.wiki/autoupload/f/e1MqST8isN3BorZ9vl5wjMH-Rbcbu0PmzOeNUaCE-deyl5f0KlZfm6UsKj-HyTuv/20250908/0xHF/2048X2048/33554273-608c-4628-93d1-68136e043317.jpeg/webp" alt="西维恩"></div>
+                        <div class="chat-bubble received">因为那个牌子太甜了吗？</div>
+                    </div>
+                     <div class="message-group received">
+                        <div class="chat-avatar-in-chat"><img src="https://tc.z.wiki/autoupload/f/e1MqST8isN3BorZ9vl5wjMH-Rbcbu0PmzOeNUaCE-deyl5f0KlZfm6UsKj-HyTuv/20250908/0xHF/2048X2048/33554273-608c-4628-93d1-68136e043317.jpeg/webp" alt="西维恩"></div>
+                        <div class="chat-bubble received">下次我买无糖的</div>
+                    </div>
+                     <div class="message-group received">
+                        <div class="chat-avatar-in-chat"><img src="https://tc.z.wiki/autoupload/f/e1MqST8isN3BorZ9vl5wjMH-Rbcbu0PmzOeNUaCE-deyl5f0KlZfm6UsKj-HyTuv/20250908/0xHF/2048X2048/33554273-608c-4628-93d1-68136e043317.jpeg/webp" alt="西维恩"></div>
+                        <div class="chat-bubble received">记得吃午餐</div>
+                    </div>
+                    <details class="system-notice-details" style="margin-top: 15px;">
+                      <summary style="font-size: 8px; color: var(--primary-color); text-align: center;">!注意</summary>
+                      <div class="notice-content" style="font-size: 8px; color: var(--primary-color);">
+                        <ol style="margin: 5px 0; padding-left: 20px;">
+                          <li>本指令为神无月原创，不要进行照搬抄袭和盗版等行为，本人账号仅有小红书和抖音，其余平台一律是盗版贩子</li>
+                        </ol>
+                      </div>
+                    </details>
+                </div>
+            </div>
+
+            <!-- Mirror Screen / Achievements -->
+            <div id="mirror-screen" class="app-page">
+                <div class="app-page-content">
+                    <div style="text-align: center;"><h1 class="app-header">Achievements</h1></div>
+
+                    <div class="achievement-card">
+                        <div class="achievement-icon"><i class="fas fa-school"></i></div>
+                        <div class="achievement-details">
+                            <div class="achievement-title">
+                                <span>入学！</span>
+                                <span class="achievement-timestamp">2019-9-5-8:30AM</span>
+                            </div>
+                            <div class="achievement-desc">你开始了崭新的高中生活。</div>
+                        </div>
+                    </div>
+                    <details class="system-notice-details">
+                      <summary style="font-size: 8px; color: var(--primary-color); text-align: center;">!注意</summary>
+                      <div class="notice-content" style="font-size: 8px; color: var(--primary-color);">
+                        <ol style="margin: 5px 0; padding-left: 20px;">
+                          <li>本指令为神无月原创，不要进行照搬抄袭和盗版等行为，本人账号仅有小红书和抖音，其余平台一律是盗版贩子</li>
+                        </ol>
+                      </div>
+                    </details>
+                </div>
+            </div>
+
+            <!-- Twitter Screen -->
+            <div id="twitter-screen" class="app-page">
+                <div class="app-page-content">
+                    <div class="twitter-sticky-header">
+                        <div class="status-bar">
+                            <span class="time">8:01</span>
+                            <div class="status-icons">
+                                <i class="fas fa-signal"></i>
+                                <i class="fas fa-wifi"></i>
+                                <i class="fas fa-battery-full"></i>
+                            </div>
+                        </div>
+                        <div class="twitter-top-bar">
+                            <h1 class="app-header twitter-nav-header">
+                                <span class="nav-item active">▽附近</span>
+                                <span class="nav-separator">|</span>
+                                <a class="nav-item" id="player-profile-btn-header"><i class="fas fa-user"></i> 我的</a>
+                            </h1>
+                            <div class="twitter-header-actions">
+                                <a class="twitter-action-btn" id="add-tweet-btn"><i class="fas fa-plus"></i></a>
+                                <a class="twitter-action-btn" id="twitter-mail-btn"><i class="fas fa-envelope"></i></a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="tweet-list">
+                        <!-- Poll Tweet -->
+                        <div class="tweet-card">
+                            <div class="tweet-avatar-container">
+                                <a class="tweet-author-link" data-user-name="CampusFocus" data-user-handle="@MM_Gossip" data-user-bio="学校里最可靠的消息来源，你可以在这里看到各种八卦" data-avatar-char="?" data-followers="999" data-following="1">
+                                    <div class="tweet-avatar" style="background: #e0e0e0;">?</div>
+                                </a>
+                            </div>
+                            <div class="tweet-body">
+                                <div class="tweet-header">
+                                    <a class="tweet-author-link" data-user-name="CampusFocus" data-user-handle="@MM_Gossip" data-user-bio="学校里最可靠的消息来源，你可以在这里看到各种八卦" data-avatar-char="?" data-followers="999" data-following="1">
+                                        <span class="tweet-author">CampusFocus</span>
+                                        <span class="tweet-handle">@MM_Gossip</span>
+                                    </a>
+                                </div>
+                                <div class="tweet-content">
+                                    <div class="poll-container">
+                                        <div class="poll-title">新学期开始，谁会是今年最受欢迎的人？</div>
+                                        <div class="poll-option" data-name="布莱尔" data-age="18" data-bio="18岁，戏剧社的明星。活泼开朗，是校园里的社交蝴蝶。" data-avatar="https://tc-new.z.wiki/autoupload/f/e1MqST8isN3BorZ9vl5wjMH-Rbcbu0PmzOeNUaCE-deyl5f0KlZfm6UsKj-HyTuv/20250913/MfBi/2048X2048/85a86327-01b5-4e98-9cb4-b3157a4e380d.jpeg/webp">布莱尔</div>
+                                        <div class="poll-option" data-name="塞巴斯蒂安" data-age="18" data-bio="黑发蓝眼的击剑社社长。严于律己，追求极致的优雅与胜利。" data-avatar="https://tc.z.wiki/autoupload/f/e1MqST8isN3BorZ9vl5wjMH-Rbcbu0PmzOeNUaCE-deyl5f0KlZfm6UsKj-HyTuv/20250907/QsHj/895X895/1757256247792_edit_1148891071995523.png">塞巴斯蒂安</div>
+                                        <div class="poll-option" data-name="赛维安特" data-age="19" data-bio="克瑞特的哥哥，19岁，金发蓝眼。看起来很温柔的贵公子，学生会长，但似乎外热内冷。" data-avatar="https://tc-new.z.wiki/autoupload/f/e1MqST8isN3BorZ9vl5wjMH-Rbcbu0PmzOeNUaCE-deyl5f0KlZfm6UsKj-HyTuv/20250907/yPp4/1790X1789/58657fe6-e2ff-4e06-8324-22711357e269_edit_1148762013496063.jpg/webp">赛维安特</div>
+                                        <div class="poll-option" data-name="薇薇安娜" data-age="18" data-bio="18岁，金发粉眼。高傲且张扬的大小姐，坚信自己是世界的中心，拥有与自信相匹配的惊人美貌。" data-avatar="https://tc-new.z.wiki/autoupload/f/e1MqST8isN3BorZ9vl5wjMH-Rbcbu0PmzOeNUaCE-deyl5f0KlZfm6UsKj-HyTuv/20250907/pdTS/1024X1024/1757256456724.png/webp">薇薇安娜</div>
+                                    </div>
+                                </div>
+                                <div class="tweet-actions">
+                                    <div><i class="fas fa-retweet"></i> 215</div>
+                                    <div><i class="far fa-comment"></i> 99+</div>
+                                    <div class="like"><i class="far fa-heart"></i> 1.2k</div>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- 薇薇安娜的推文 -->
+                        <div class="tweet-card">
+                            <a class="tweet-author-link" data-user-name="薇薇安娜" data-user-handle="@Vivianna_Queen" data-user-bio="18岁，金发粉眼。高傲且张扬的大小姐，坚信自己是世界的中心，拥有与自信相匹配的惊人美貌。" data-avatar-url="https://tc-new.z.wiki/autoupload/f/e1MqST8isN3BorZ9vl5wjMH-Rbcbu0PmzOeNUaCE-deyl5f0KlZfm6UsKj-HyTuv/20250907/pdTS/1024X1024/1757256456724.png/webp" data-followers="8765" data-following="10">
+                                <div class="tweet-avatar"><img src="https://tc-new.z.wiki/autoupload/f/e1MqST8isN3BorZ9vl5wjMH-Rbcbu0PmzOeNUaCE-deyl5f0KlZfm6UsKj-HyTuv/20250907/pdTS/1024X1024/1757256456724.png/webp" alt="薇薇安娜"></div>
+                            </a>
+                            <div class="tweet-body">
+                                <div class="tweet-header">
+                                    <a class="tweet-author-link" data-user-name="薇薇安娜" data-user-handle="@Vivianna_Queen" data-user-bio="18岁，金发粉眼。高傲且张扬的大小姐，坚信自己是世界的中心，拥有与自信相匹配的惊人美貌。" data-avatar-url="https://tc-new.z.wiki/autoupload/f/e1MqST8isN3BorZ9vl5wjMH-Rbcbu0PmzOeNUaCE-deyl5f0KlZfm6UsKj-HyTuv/20250907/pdTS/1024X1024/1757256456724.png/webp" data-followers="8765" data-following="10">
+                                        <span class="tweet-author">薇薇安娜</span>
+                                        <span class="tweet-handle">@Vivianna_Queen</span>
+                                    </a>
+                                </div>
+                                <div class="tweet-content">舞会？不过是为我准备的又一场加冕礼罢了。期待看到你们为我尖叫的样子。</div>
+                                <div class="tweet-actions">
+                                    <div><i class="fas fa-retweet"></i> 302</div>
+                                    <div><i class="far fa-comment"></i> 154</div>
+                                    <div class="like"><i class="far fa-heart"></i> 2.1k</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="tweet-card">
+                            <a class="tweet-author-link" data-user-name="莉莉" data-user-handle="@Lily_Whisper" data-user-bio="17岁，紫发蓝眼的文静少女，你的青梅，和你从小就是好朋友，她的学习很好。但因为有些软弱的性格总被人针对" data-avatar-url="https://tc.z.wiki/autoupload/f/e1MqST8isN3BorZ9vl5wjMH-Rbcbu0PmzOeNUaCE-deyl5f0KlZfm6UsKj-HyTuv/20250907/2MyR/895X895/1757256685270_edit_1148797258847100.png" data-followers="210" data-following="15">
+                                <div class="tweet-avatar"><img src="https://tc.z.wiki/autoupload/f/e1MqST8isN3BorZ9vl5wjMH-Rbcbu0PmzOeNUaCE-deyl5f0KlZfm6UsKj-HyTuv/20250907/2MyR/895X895/1757256685270_edit_1148797258847100.png" alt="莉莉"></div>
+                            </a>
+                            <div class="tweet-body">
+                                <div class="tweet-header">
+                                    <a class="tweet-author-link" data-user-name="莉莉" data-user-handle="@Lily_Whisper" data-user-bio="17岁，紫发蓝眼的文静少女，你的青梅，和你从小就是好朋友，她的学习很好。但因为有些软弱的性格总被人针对" data-avatar-url="https://tc.z.wiki/autoupload/f/e1MqST8isN3BorZ9vl5wjMH-Rbcbu0PmzOeNUaCE-deyl5f0KlZfm6UsKj-HyTuv/20250907/2MyR/895X895/1757256685270_edit_1148797258847100.png" data-followers="210" data-following="15">
+                                        <span class="tweet-author">莉莉</span>
+                                        <span class="tweet-handle">@Lily_Whisper</span>
+                                    </a>
+                                </div>
+                                <div class="tweet-content">新学期开始了...社团活动看起来都好有趣，但是选择起来好难。大家有什么推荐吗？希望能交到新朋友... <span class="tweet-hashtag">#新生报到</span> </div>
+                                <div class="tweet-actions">
+                                    <div><i class="fas fa-retweet"></i> 2</div>
+                                    <div><i class="far fa-comment"></i> 15</div>
+                                    <div class="like"><i class="far fa-heart"></i> 45</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="tweet-card">
+                            <a class="tweet-author-link" data-user-name="Starlight Cafe" data-user-handle="@Starlight_Cafe" data-user-bio="离学校很近的甜品店，因为物美价廉而受欢迎。也许可以来这里打工" data-avatar-char="C" data-followers="580" data-following="1">
+                                <div class="tweet-avatar" style="color: #8d6e63; background-color: #efebe9;">C</div>
+                            </a>
+                            <div class="tweet-body">
+                                <div class="tweet-header">
+                                    <a class="tweet-author-link" data-user-name="Starlight Cafe" data-user-handle="@Starlight_Cafe" data-user-bio="离学校很近的甜品店，因为物美价廉而受欢迎。也许可以来这里打工" data-avatar-char="C" data-followers="580" data-following="1">
+                                        <span class="tweet-author">Starlight Cafe</span>
+                                        <span class="tweet-handle">@Starlight_Cafe</span>
+                                    </a>
+                                </div>
+                                <div class="tweet-content">🍂秋意渐浓，来一杯暖暖的【海盐焦糖拿铁】吧！绵密的奶泡搭配微咸的焦糖风味，是午后提神的最佳选择。今天起到周末，凭学生证第二杯半价哦！</div>
+                                <div class="tweet-image-container">
+                                    <img src="https://image.pollinations.ai/prompt/A%20photorealistic%2C%20top-down%20shot%20of%20a%20latte%20in%20a%20ceramic%20mug%2C%20showcasing%20beautiful%20latte%20art.%20The%20mug%20is%20on%20a%20rustic%20wooden%20cafe%20table.%20Next%20to%20the%20mug%2C%20there%20is%20a%20small%20silver%20spoon%20and%20a%20plate%20with%20a%20couple%20of%20small%2C%20delicate%20biscuits.%20Soft%2C%20natural%20lighting.?width=1024&height=576&enhance=true&private=true&nologo=true&safe=true&model=flux" alt="海盐焦糖拿铁">
+                                </div>
+                                <div class="tweet-actions">
+                                    <div><i class="fas fa-retweet"></i> 35</div>
+                                    <div><i class="far fa-comment"></i> 28</div>
+                                    <div class="like"><i class="far fa-heart"></i> 189</div>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Krit's Tweet -->
+                        <div class="tweet-card">
+                            <a class="tweet-author-link" data-user-name="克瑞特" data-user-handle="@Krit_Violin" data-user-bio="17岁，金发蓝眼。天才的小提琴少年，已举办十余场大型个人演出。看起来不太好接近，有些阴郁。" data-avatar-url="https://tc-new.z.wiki/autoupload/f/e1MqST8isN3BorZ9vl5wjMH-Rbcbu0PmzOeNUaCE-deyl5f0KlZfm6UsKj-HyTuv/20250907/zWT5/895X895/1757256209681_edit_1148773236686687.png" data-followers="6593" data-following="3">
+                                <div class="tweet-avatar"><img src="https://tc-new.z.wiki/autoupload/f/e1MqST8isN3BorZ9vl5wjMH-Rbcbu0PmzOeNUaCE-deyl5f0KlZfm6UsKj-HyTuv/20250907/zWT5/895X895/1757256209681_edit_1148773236686687.png" alt="Krit"></div>
+                            </a>
+                            <div class="tweet-body">
+                                <div class="tweet-header">
+                                    <a class="tweet-author-link" data-user-name="克瑞特" data-user-handle="@Krit_Violin" data-user-bio="17岁，金发蓝眼的新生。天才的小提琴少年，已举办十余场大型个人演出。看起来不太好接近，有些阴郁。" data-avatar-url="https://tc-new.z.wiki/autoupload/f/e1MqST8isN3BorZ9vl5wjMH-Rbcbu0PmzOeNUaCE-deyl5f0KlZfm6UsKj-HyTuv/20250907/zWT5/895X895/1757256209681_edit_1148773236686687.png" data-followers="6593" data-following="3">
+                                        <span class="tweet-author">克瑞特</span>
+                                        <span class="tweet-handle">@Krit_Violin</span>
+                                    </a>
+                                </div>
+                                <div class="tweet-content">旧音乐厅的音响效果……尚可。</div>
+                                <div class="tweet-actions">
+                                    <div><i class="fas fa-retweet"></i> 18</div>
+                                    <div><i class="far fa-comment"></i> 23</div>
+                                    <div class="like"><i class="far fa-heart"></i> 159</div>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- 塞巴斯蒂安的推文 -->
+                         <div class="tweet-card">
+                            <a class="tweet-author-link" data-user-name="塞巴斯蒂安" data-user-handle="@Sebastian_Sword" data-user-bio="黑发蓝眼的击剑社社长。严于律己，追求极致的优雅与胜利。" data-avatar-url="https://tc.z.wiki/autoupload/f/e1MqST8isN3BorZ9vl5wjMH-Rbcbu0PmzOeNUaCE-deyl5f0KlZfm6UsKj-HyTuv/20250907/QsHj/895X895/1757256247792_edit_1148891071995523.png" data-followers="3410" data-following="25">
+                                <div class="tweet-avatar"><img src="https://tc.z.wiki/autoupload/f/e1MqST8isN3BorZ9vl5wjMH-Rbcbu0PmzOeNUaCE-deyl5f0KlZfm6UsKj-HyTuv/20250907/QsHj/895X895/1757256247792_edit_1148891071995523.png" alt="塞巴斯蒂安"></div>
+                            </a>
+                            <div class="tweet-body">
+                                <div class="tweet-header">
+                                    <a class="tweet-author-link" data-user-name="塞巴斯蒂安" data-user-handle="@Sebastian_Sword" data-user-bio="黑发蓝眼的击剑社社长。严于律己，追求极致的优雅与胜利。" data-avatar-url="https://tc.z.wiki/autoupload/f/e1MqST8isN3BorZ9vl5wjMH-Rbcbu0PmzOeNUaCE-deyl5f0KlZfm6UsKj-HyTuv/20250907/QsHj/895X895/1757256247792_edit_1148891071995523.png" data-followers="3410" data-following="25">
+                                        <span class="tweet-author">塞巴斯蒂安</span>
+                                        <span class="tweet-handle">@Sebastian_Sword</span>
+                                    </a>
+                                </div>
+                                <div class="tweet-content">剑刃的寒光，是通往胜利的唯一路径。今日的训练，亦无懈怠。</div>
+                                <div class="tweet-actions">
+                                    <div><i class="fas fa-retweet"></i> 88</div>
+                                    <div><i class="far fa-comment"></i> 45</div>
+                                    <div class="like"><i class="far fa-heart"></i> 670</div>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Talis's Tweet -->
+                        <div class="tweet-card">
+                            <a class="tweet-author-link" data-user-name="塔利斯" data-user-handle="@Talis_Seed" data-user-bio="17岁，黑发紫眼的新生，贫困生。有些自卑但内心坚韧，像一株努力生长的小白花。" data-avatar-url="https://tc.z.wiki/autoupload/f/e1MqST8isN3BorZ9vl5wjMH-Rbcbu0PmzOeNUaCE-deyl5f0KlZfm6UsKj-HyTuv/20250907/hqqk/896X896/1757256128305_edit_1148751343345023.png/webp" data-followers="12" data-following="5">
+                                <div class="tweet-avatar"><img src="https://tc.z.wiki/autoupload/f/e1MqST8isN3BorZ9vl5wjMH-Rbcbu0PmzOeNUaCE-deyl5f0KlZfm6UsKj-HyTuv/20250907/hqqk/896X896/1757256128305_edit_1148751343345023.png/webp" alt="Talis"></div>
+                            </a>
+                            <div class="tweet-body">
+                                <div class="tweet-header">
+                                    <a class="tweet-author-link" data-user-name="塔利斯" data-user-handle="@Talis_Seed" data-user-bio="17岁，黑发紫眼的新生，贫困生。有些自卑但内心坚韧，像一株努力生长的小白花。" data-avatar-url="https://tc.z.wiki/autoupload/f/e1MqST8isN3BorZ9vl5wjMH-Rbcbu0PmzOeNUaCE-deyl5f0KlZfm6UsKj-HyTuv/20250907/hqqk/896X896/1757256128305_edit_1148751343345023.png/webp" data-followers="12" data-following="5">
+                                        <span class="tweet-author">塔利斯</span>
+                                        <span class="tweet-handle">@Talis_Seed</span>
+                                    </a>
+                                </div>
+                                <div class="tweet-content">这里……比我想象中要大得多。希望我能跟上大家的步伐。</div>
+                                <div class="tweet-actions">
+                                    <div><i class="fas fa-retweet"></i> 0</div>
+                                    <div><i class="far fa-comment"></i> 1</div>
+                                    <div class="like"><i class="far fa-heart"></i> 2</div>
+                                </div>
+                            </div>
+                        </div>
+                         <!-- 罗曼斯克的推文 -->
+                        <div class="tweet-card">
+                            <a class="tweet-author-link" data-user-name="罗曼斯克" data-user-handle="@Romanske_Craft" data-user-bio="18岁，金发绿眼。温柔善良的手工社社长，总是带着治愈的微笑，手很巧，能制作各种可爱的小东西。" data-avatar-url="https://tc.z.wiki/autoupload/f/e1MqST8isN3BorZ9vl5wjMH-Rbcbu0PmzOeNUaCE-deyl5f0KlZfm6UsKj-HyTuv/20250907/iKjO/1024X1024/1757256120342.png/webp" data-followers="128" data-following="89">
+                                <div class="tweet-avatar"><img src="https://tc.z.wiki/autoupload/f/e1MqST8isN3BorZ9vl5wjMH-Rbcbu0PmzOeNUaCE-deyl5f0KlZfm6UsKj-HyTuv/20250907/iKjO/1024X1024/1757256120342.png/webp" alt="罗曼斯克"></div>
+                            </a>
+                            <div class="tweet-body">
+                                <div class="tweet-header">
+                                    <a class="tweet-author-link" data-user-name="罗曼斯克" data-user-handle="@Romanske_Craft" data-user-bio="18岁，金发绿眼。温柔善良的手工社社长，总是带着治愈的微笑，手很巧，能制作各种可爱的小东西。" data-avatar-url="https://tc.z.wiki/autoupload/f/e1MqST8isN3BorZ9vl5wjMH-Rbcbu0PmzOeNUaCE-deyl5f0KlZfm6UsKj-HyTuv/20250907/iKjO/1024X1024/1757256120342.png/webp" data-followers="128" data-following="89">
+                                        <span class="tweet-author">罗曼斯克</span>
+                                        <span class="tweet-handle">@Romanske_Craft</span>
+                                    </a>
+                                </div>
+                                <div class="tweet-content">为手工社团的新成员们准备了一些小礼物，希望这些小小的毛毡玩偶能给大家带来温暖。欢迎随时来玩~ 😊</div>
+                                <div class="tweet-actions">
+                                    <div><i class="fas fa-retweet"></i> 6</div>
+                                    <div><i class="far fa-comment"></i> 30</div>
+                                    <div class="like"><i class="far fa-heart"></i> 98</div>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- 泽因的推文 -->
+                        <div class="tweet-card">
+                            <a class="tweet-author-link" data-user-name="泽因" data-user-handle="@Zayn_Gamer" data-user-bio="18岁，橄榄球队长，同时也是个游戏高手。热情开朗，但有时会因为太自来熟而让人困扰。" data-avatar-url="https://tc.z.wiki/autoupload/f/e1MqST8isN3BorZ9vl5wjMH-Rbcbu0PmzOeNUaCE-deyl5f0KlZfm6UsKj-HyTuv/20250907/6D0S/1024X1024/1757256599256.png/webp" data-followers="1580" data-following="1350">
+                                <div class="tweet-avatar"><img src="https://tc.z.wiki/autoupload/f/e1MqST8isN3BorZ9vl5wjMH-Rbcbu0PmzOeNUaCE-deyl5f0KlZfm6UsKj-HyTuv/20250907/6D0S/1024X1024/1757256599256.png/webp" alt="泽因"></div>
+                            </a>
+                            <div class="tweet-body">
+                                <div class="tweet-header">
+                                    <a class="tweet-author-link" data-user-name="泽因" data-user-handle="@Zayn_Gamer" data-user-bio="18岁，橄榄球队长，同时也是个游戏高手。热情开朗，但有时会因为太自来熟而让人困扰。" data-avatar-url="https://tc.z.wiki/autoupload/f/e1MqST8isN3BorZ9vl5wjMH-Rbcbu0PmzOeNUaCE-deyl5f0KlZfm6UsKj-HyTuv/20250907/6D0S/1024X1024/1757256599256.png/webp" data-followers="1580" data-following="1350">
+                                        <span class="tweet-author">泽因</span>
+                                        <span class="tweet-handle">@Zayn_Gamer</span>
+                                    </a>
+                                </div>
+                                <div class="tweet-content">橄榄球队招新！朋友们，想一起挥洒汗水吗？训练结束后来我家开黑也行，新出的《星际先锋》超赞！</div>
+                                <div class="tweet-actions">
+                                    <div><i class="fas fa-retweet"></i> 20</div>
+                                    <div><i class="far fa-comment"></i> 45</div>
+                                    <div class="like"><i class="far fa-heart"></i> 129</div>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- 布莱尔的推文 -->
+                        <div class="tweet-card">
+                            <a class="tweet-author-link" data-user-name="布莱尔" data-user-handle="@Blair_OnStage" data-user-bio="18岁，戏剧社的明星。活泼开朗，是校园里的社交蝴蝶。" data-avatar-url="https://tc-new.z.wiki/autoupload/f/e1MqST8isN3BorZ9vl5wjMH-Rbcbu0PmzOeNUaCE-deyl5f0KlZfm6UsKj-HyTuv/20250913/MfBi/2048X2048/85a86327-01b5-4e98-9cb4-b3157a4e380d.jpeg/webp" data-followers="3254" data-following="128">
+                                <div class="tweet-avatar"><img src="https://tc-new.z.wiki/autoupload/f/e1MqST8isN3BorZ9vl5wjMH-Rbcbu0PmzOeNUaCE-deyl5f0KlZfm6UsKj-HyTuv/20250913/MfBi/2048X2048/85a86327-01b5-4e98-9cb4-b3157a4e380d.jpeg/webp" alt="布莱尔"></div>
+                            </a>
+                            <div class="tweet-body">
+                                <div class="tweet-header">
+                                    <a class="tweet-author-link" data-user-name="布莱尔" data-user-handle="@Blair_OnStage" data-user-bio="18岁，戏剧社的明星。活泼开朗，是校园里的社交蝴蝶。" data-avatar-url="https://tc-new.z.wiki/autoupload/f/e1MqST8isN3BorZ9vl5wjMH-Rbcbu0PmzOeNUaCE-deyl5f0KlZfm6UsKj-HyTuv/20250913/MfBi/2048X2048/85a86327-01b5-4e98-9cb4-b3157a4e380d.jpeg/webp" data-followers="3254" data-following="128">
+                                        <span class="tweet-author">布莱尔</span>
+                                        <span class="tweet-handle">@Blair_OnStage</span>
+                                    </a>
+                                </div>
+                                <div class="tweet-content">天哪，开学典礼的流程也太无聊了吧！真想快点开始戏剧社的排练，我们这次的剧本超级棒！ <span class="tweet-hashtag">#NewSemester</span></div>
+                                <div class="tweet-actions">
+                                    <div><i class="fas fa-retweet"></i> 75</div>
+                                    <div><i class="far fa-comment"></i> 123</div>
+                                    <div class="like"><i class="far fa-heart"></i> 942</div>
+                                </div>
+                            </div>
+                        </div>
+                        <details class="system-notice-details">
+                          <summary style="font-size: 8px; color: var(--primary-color); text-align: center;">!注意</summary>
+                          <div class="notice-content" style="font-size: 8px; color: var(--primary-color);">
+                            <ol style="margin: 5px 0; padding-left: 20px;">
+                              <li>本指令为神无月原创，不要进行照搬抄袭和盗版等行为，本人账号仅有小红书和抖音，其余平台一律是盗版贩子</li>
+                            </ol>
+                          </div>
+                        </details>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Twitter Profile Page (Template for NPCs) -->
+            <div id="twitter-profile-page" class="app-page">
+                <a class="back-button back-to-twitter"><i class="fas fa-arrow-left"></i></a>
+                <div class="app-page-content">
+                    <div class="profile-header-bg"></div>
+                    <div class="profile-details">
+                        <div class="profile-avatar"></div>
+                        <h2 class="profile-name"></h2>
+                        <p class="profile-handle"></p>
+                        <div class="profile-stats">
+                            <div><span class="following-count"></span> 关注</div>
+                            <div><span class="followers-count"></span> 粉丝</div>
+                        </div>
+                        <p class="profile-bio"></p>
+                        <div class="profile-tweets-section">
+                            <button class="action-button" style="margin-top: 15px; font-size: 14px; padding: 10px;">查看TA的全部帖子</button>
+                        </div>
+                        <details class="system-notice-details">
+                          <summary style="font-size: 8px; color: var(--primary-color); text-align: center;">!注意</summary>
+                          <div class="notice-content" style="font-size: 8px; color: var(--primary-color);">
+                            <ol style="margin: 5px 0; padding-left: 20px;">
+                              <li>本指令为神无月原创，不要进行照搬抄袭和盗版等行为，本人账号仅有小红书和抖音，其余平台一律是盗版贩子</li>
+                            </ol>
+                          </div>
+                        </details>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Twitter Profile Page for Player -->
+            <div id="twitter-profile-player" class="app-page">
+                <a class="back-button back-to-twitter"><i class="fas fa-arrow-left"></i></a>
+                <div class="app-page-content">
+                    <div class="profile-header-bg"></div>
+                    <div class="profile-details">
+                        <div class="profile-avatar">P</div>
+                        <h2 class="profile-name">Player</h2>
+                        <p class="profile-handle">@player</p>
+                        <div class="profile-stats">
+                            <div><span>0</span> 关注</div>
+                            <div><span>0</span> 粉丝</div>
+                        </div>
+                        <p class="profile-bio">待设置</p>
+                        <div class="profile-tweets-section">
+                            <p>您还没有发布过推文哦</p>
+                        </div>
+                        <details class="system-notice-details">
+                          <summary style="font-size: 8px; color: var(--primary-color); text-align: center;">!注意</summary>
+                          <div class="notice-content" style="font-size: 8px; color: var(--primary-color);">
+                            <ol style="margin: 5px 0; padding-left: 20px;">
+                              <li>本指令为神无月原创，不要进行照搬抄袭和盗版等行为，本人账号仅有小红书和抖音，其余平台一律是盗版贩子</li>
+                            </ol>
+                          </div>
+                        </details>
+                    </div>
+                </div>
+            </div>
+
+            <!-- NEW: Twitter Mail Screen -->
+            <div id="twitter-mail-screen" class="app-page">
+                <div class="twitter-sticky-header" style="position:relative;">
+                    <div class="status-bar">
+                        <span class="time">8:02</span>
+                        <div class="status-icons">
+                            <i class="fas fa-signal"></i>
+                            <i class="fas fa-wifi"></i>
+                            <i class="fas fa-battery-full"></i>
+                        </div>
+                    </div>
+                    <div class="twitter-top-bar" style="position: relative; justify-content: center;">
+                        <a class="back-button back-to-twitter" style="position: absolute; top: 50%; transform: translateY(-50%); left: 15px; background: transparent; width:auto; height:auto;"><i class="fas fa-arrow-left"></i></a>
+                        <h1 class="app-header twitter-nav-header" style="padding-left: 0; flex-grow: 0;">
+                            通知
+                        </h1>
+                    </div>
+                </div>
+                <div class="app-page-content" style="padding: 20px;">
+                    <div class="info-card" style="text-align: center;">
+                        <p style="color: var(--text-light);">暂时没有新消息哦</p>
+                    </div>
+                    <details class="system-notice-details">
+                      <summary style="font-size: 8px; color: var(--primary-color); text-align: center;">!注意</summary>
+                      <div class="notice-content" style="font-size: 8px; color: var(--primary-color);">
+                        <ol style="margin: 5px 0; padding-left: 20px;">
+                          <li>本指令为神无月原创，不要进行照搬抄袭和盗版等行为，本人账号仅有小红书和抖音，其余平台一律是盗版贩子</li>
+                        </ol>
+                      </div>
+                    </details>
+                </div>
+            </div>
+
+            <!-- NEW: Settings Screen -->
+            <div id="settings-screen" class="app-page">
+                <div class="app-page-content">
+                    <div class="chat-header" style="margin-bottom: 20px;">
+                        <a class="back-button back-to-contacts"><i class="fas fa-arrow-left"></i></a>
+                        <div class="chat-header-title">设置</div>
+                    </div>
+                    
+                    <div class="info-card">
+                        <div class="settings-form-group">
+                            <label for="ingame-api-endpoint">【API接口】</label>
+                            <input type="text" id="ingame-api-endpoint" name="ingame-api-endpoint" placeholder="例如: https://api.openai.com/v1">
+                        </div>
+                        <div class="settings-form-group">
+                            <label for="ingame-api-key">【API密钥】</label>
+                            <input type="password" id="ingame-api-key" name="ingame-api-key" placeholder="请输入你的API密钥">
+                        </div>
+                        <div class="settings-form-group">
+                            <label for="ingame-model-name">【模型】</label>
+                            <input type="text" id="ingame-model-name" name="ingame-model-name" placeholder="例如: gpt-4-turbo">
+                        </div>
+                    </div>
+
+                    <button class="action-button" id="save-ingame-settings-button">保存设置</button>
+
+                    <details class="system-notice-details" style="margin-top: 20px;">
+                      <summary style="font-size: 8px; color: var(--primary-color); text-align: center;">!注意</summary>
+                      <div class="notice-content" style="font-size: 8px; color: var(--primary-color);">
+                        <ol style="margin: 5px 0; padding-left: 20px;">
+                          <li>本指令为神无月原创，不要进行照搬抄袭和盗版等行为，本人账号仅有小红书和抖音，其余平台一律是盗版贩子</li>
+                        </ol>
+                      </div>
+                    </details>
+                </div>
+            </div>
+
+        </main>
+
+        <!-- MODIFIED: This bar is now hidden until the game starts -->
+        <div class="global-input-bar" id="global-input-bar" style="display: none;">
+            <button class="refresh-btn"><i class="fas fa-sync-alt"></i></button>
+            <input type="text" id="user-input-field" placeholder="输入你的行动或对话...">
+            <button class="send-btn" id="send-button"><i class="fas fa-paper-plane"></i></button>
+        </div>
+
+        <!-- MODIFIED: This dock is now hidden until the game starts -->
+        <nav class="app-dock" id="app-dock" style="display: none;">
+            <a href="#" class="dock-icon active" data-target="story-screen"><i class="fas fa-book-open"></i><span>故事</span></a>
+            <a href="#" class="dock-icon" data-target="schedule-screen"><i class="fas fa-calendar-alt"></i><span>日程</span></a>
+            <a href="#" class="dock-icon" data-target="phone-screen-app"><i class="fas fa-mobile-alt"></i><span>手机</span></a>
+            <a href="#" class="dock-icon" data-target="mirror-screen"><i class="fas fa-trophy"></i><span>成就</span></a>
+            <a href="#" class="dock-icon" data-target="twitter-screen"><i class="fab fa-twitter"></i><span>推特</span></a>
+        </nav>
+        
+        <!-- Modal for Twitter Profiles -->
+        <div class="modal-overlay">
+            <div class="modal-content">
+                <span class="modal-close"><i class="fas fa-times"></i></span>
+                <div class="modal-avatar"></div>
+                <h3 class="modal-name"></h3>
+                <p class="modal-age"></p>
+                <p class="modal-bio"></p>
+            </div>
+        </div>
+
+        <!-- Notification Modals -->
+        <div id="twitter-notification-modal" class="notification-modal-overlay">
+            <div class="notification-modal-content twitter-notification">
+                <p><i class="fas fa-pencil-alt"></i> 输入指令即可发帖哦</p>
+            </div>
+        </div>
+        <div id="contacts-notification-modal" class="notification-modal-overlay">
+            <div class="notification-modal-content contacts-notification">
+                <p id="contacts-notification-text"></p>
+            </div>
+        </div>
+
+
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // --- UI Element References ---
+            const appPages = document.querySelectorAll('.app-page');
+            const dockIcons = document.querySelectorAll('.dock-icon');
+            const contactLinks = document.querySelectorAll('.contact-link');
+            const backButtons = document.querySelectorAll('.back-button');
+            
+            const globalInputBar = document.getElementById('global-input-bar');
+            const appDock = document.getElementById('app-dock');
+            const userInputField = document.getElementById('user-input-field');
+            const sendButton = document.getElementById('send-button');
+            const storyContentPanel = document.getElementById('story-content-panel');
+
+            // Setup Screen Elements
+            const startGameButton = document.getElementById('start-game-button');
+
+            // In-game Settings Elements
+            const settingsBtn = document.getElementById('settings-btn');
+            const saveIngameSettingsButton = document.getElementById('save-ingame-settings-button');
+
+            // Twitter Elements
+            const playerProfileBtnHeader = document.getElementById('player-profile-btn-header');
+            const twitterMailBtn = document.getElementById('twitter-mail-btn');
+            const modalOverlay = document.querySelector('.modal-overlay');
+            const modalContent = document.querySelector('.modal-content');
+            const modalClose = document.querySelector('.modal-close');
+            const pollOptions = document.querySelectorAll('.poll-option');
+            const tweetAuthorLinks = document.querySelectorAll('.tweet-author-link');
+            const likeButtons = document.querySelectorAll('.like');
+
+            // --- Game State & Data ---
+            let conversationHistory = [];
+
+            // --- Core Game Logic ---
+
+            /**
+             * Switches the currently visible page.
+             * @param {string} targetId The ID of the page to show.
+             */
+            const switchPage = (targetId) => {
+                appPages.forEach(page => {
+                    page.classList.toggle('active', page.id === targetId);
+                });
+                dockIcons.forEach(icon => {
+                    let mainTarget = icon.dataset.target;
+                    let targetPageId = targetId;
+
+                    // Handle special cases where multiple pages map to one dock icon
+                    if (targetId.startsWith('chat-screen-') || targetId === 'settings-screen') {
+                        targetPageId = 'phone-screen-app';
+                    } else if (targetId.startsWith('twitter-profile-') || targetId === 'twitter-mail-screen') {
+                        targetPageId = 'twitter-screen';
+                    }
+                    
+                    icon.classList.toggle('active', mainTarget === targetPageId);
+                });
+            };
+
+            /**
+             * Loads all player and API data from localStorage and applies it to the UI.
+             */
+            const loadGameData = () => {
+                const playerName = localStorage.getItem('playerName') || 'Player';
+                const playerAppearance = localStorage.getItem('playerAppearance') || '';
+                const playerPersonality = localStorage.getItem('playerPersonality') || '';
+
+                document.getElementById('player-name-display').textContent = playerName;
+                
+                const appearanceTag = document.getElementById('player-appearance-tag');
+                if (playerAppearance) {
+                    appearanceTag.textContent = `外貌: ${playerAppearance.substring(0, 10) + (playerAppearance.length > 10 ? '...' : '')}`;
+                    appearanceTag.style.display = 'inline-block';
+                } else {
+                    appearanceTag.style.display = 'none';
+                }
+
+                const personalityTag = document.getElementById('player-personality-tag');
+                if (playerPersonality) {
+                    personalityTag.textContent = `性格: ${playerPersonality.substring(0, 10) + (playerPersonality.length > 10 ? '...' : '')}`;
+                    personalityTag.style.display = 'inline-block';
+                } else {
+                    personalityTag.style.display = 'none';
+                }
+            
+                const apiEndpoint = localStorage.getItem('apiEndpoint') || '';
+                const apiKey = localStorage.getItem('apiKey') || '';
+                const modelName = localStorage.getItem('modelName') || '';
+
+                document.getElementById('ingame-api-endpoint').value = apiEndpoint;
+                document.getElementById('ingame-api-key').value = apiKey;
+                document.getElementById('ingame-model-name').value = modelName;
+            };
+
+            /**
+             * Saves settings from the setup screen and starts the game.
+             */
+            const saveSettingsAndStartGame = () => {
+                localStorage.setItem('playerName', document.getElementById('setup-player-name').value);
+                localStorage.setItem('playerAppearance', document.getElementById('setup-player-appearance').value);
+                localStorage.setItem('playerPersonality', document.getElementById('setup-player-personality').value);
+                localStorage.setItem('playerBackground', document.getElementById('setup-player-background').value);
+                localStorage.setItem('playerRelations', document.getElementById('setup-player-relations').value);
+
+                localStorage.setItem('apiEndpoint', document.getElementById('setup-api-endpoint').value);
+                localStorage.setItem('apiKey', document.getElementById('setup-api-key').value);
+                localStorage.setItem('modelName', document.getElementById('setup-model-name').value);
+
+                localStorage.setItem('gameSetupComplete', 'true');
+                initializeGameUI();
+            };
+
+            /**
+             * Initializes the main game UI after setup is complete.
+             */
+            const initializeGameUI = () => {
+                loadGameData();
+                globalInputBar.style.display = 'flex';
+                appDock.style.display = 'flex';
+                switchPage('story-screen');
+                buildInitialPrompt();
+            };
+            
+            /**
+             * Saves settings from the in-game settings page.
+             */
+            const saveInGameSettings = () => {
+                localStorage.setItem('apiEndpoint', document.getElementById('ingame-api-endpoint').value);
+                localStorage.setItem('apiKey', document.getElementById('ingame-api-key').value);
+                localStorage.setItem('modelName', document.getElementById('ingame-model-name').value);
+                
+                const notificationText = document.getElementById('contacts-notification-text');
+                notificationText.innerHTML = '<i class="fas fa-check-circle"></i> 设置已保存';
+                const notificationModal = document.getElementById('contacts-notification-modal');
+                notificationModal.classList.add('show');
+                setTimeout(() => notificationModal.classList.remove('show'), 2000);
+
+                switchPage('phone-screen-app');
+            };
+
+            /**
+             * Builds the initial system prompt for the AI.
+             */
+            const buildInitialPrompt = () => {
+                const characterProfile = `
+# 玩家角色设定
+- 名字: ${localStorage.getItem('playerName')}
+- 外貌: ${localStorage.getItem('playerAppearance')}
+- 性格: ${localStorage.getItem('playerPersonality')}
+- 身份背景: ${localStorage.getItem('playerBackground')}
+- 重要社交关系: ${localStorage.getItem('playerRelations')}
+
+# 游戏世界背景
+这是一个发生在美国现代高中“常春藤学院”的校园生活模拟故事。故事充满了青春、友情、秘密和选择。
+
+# 你的角色 (AI)
+你是一个专业的游戏主持人（GM）。你的任务是：
+1.  **扮演所有NPC**: 你将扮演除了玩家以外的所有角色，包括莉莉、西维恩等。你需要根据他们的性格设定进行生动的对话和行动描述。
+2.  **描绘环境与事件**: 详细生动地描述游戏世界中的场景、氛围以及发生的事件。
+3.  **推动剧情发展**: 根据玩家的行动和选择，自然地推进故事线。
+4.  **提供选择**: 在关键节点，你可以明确地给玩家提供选项，格式为 "[A] 选项一 [B] 选项二"，或者让玩家自由行动。
+5.  **维持游戏规则**: 游戏中的数值（如好感度、压力等）由你来管理和叙述其变化。例如，你可以说：“（莉莉对你的好感度增加了）”。
+6.  **输出格式**: 你的回复应该总是以游戏叙事的方式呈现。使用旁白、角色对话等形式。不要以AI助手的身份说话。将旁白包裹在<div class="narration-box-hs"></div>中，将NPC对话包裹在<div class="dialogue-box-hs char-npc">...</div>中，玩家自己的思考或内心独白包裹在<div class="dialogue-box-hs self-dialogue">...</div>中。确保HTML结构完整。
+                `;
+                
+                conversationHistory = [
+                    { role: 'system', content: characterProfile },
+                    { role: 'assistant', content: storyContentPanel.innerHTML } 
+                ];
+            };
+
+            /**
+             * Displays a message (from player or AI) in the story panel.
+             * @param {string} sender - 'player' or 'assistant'
+             * @param {string} content - The text or HTML content of the message.
+             */
+            const displayMessage = (sender, content) => {
+                if (sender === 'player') {
+                    const playerName = localStorage.getItem('playerName') || 'Player';
+                    const dialogueBox = document.createElement('div');
+                    dialogueBox.className = 'dialogue-box-hs self-dialogue';
+                    dialogueBox.innerHTML = `
+                        <div class="dialogue-speaker-info">
+                            <div class="dialogue-avatar-hs"><i class="fas fa-user"></i></div>
+                            <div class="dialogue-content-hs">
+                                <div class="dialogue-header-hs">${playerName}</div>
+                            </div>
+                        </div>
+                        <div class="dialogue-body-container">
+                            <div class="dialogue-body-hs"><p>${content}</p></div>
+                        </div>
+                    `;
+                    storyContentPanel.appendChild(dialogueBox);
+                } else { // assistant
+                    const tempDiv = document.createElement('div');
+                    tempDiv.innerHTML = content;
+                    Array.from(tempDiv.children).forEach(child => {
+                        storyContentPanel.appendChild(child);
+                    });
+                }
+                storyContentPanel.scrollTop = storyContentPanel.scrollHeight;
+            };
+
+            /**
+             * Sends user message to the API and displays the response.
+             */
+            const sendMessageToAPI = async () => {
+                const userInput = userInputField.value.trim();
+                if (!userInput) return;
+
+                const apiEndpoint = localStorage.getItem('apiEndpoint');
+                const apiKey = localStorage.getItem('apiKey');
+                const modelName = localStorage.getItem('modelName');
+
+                if (!apiEndpoint || !apiKey || !modelName) {
+                    alert('请先在“手机”->“设置”中配置API信息！');
+                    switchPage('settings-screen');
+                    return;
+                }
+
+                displayMessage('player', userInput);
+                userInputField.value = '';
+                sendButton.disabled = true;
+                sendButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+
+                conversationHistory.push({ role: 'user', content: userInput });
+
+                try {
+                    const response = await fetch(`${apiEndpoint}/chat/completions`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${apiKey}`
+                        },
+                        body: JSON.stringify({
+                            model: modelName,
+                            messages: conversationHistory,
+                        })
+                    });
+
+                    if (!response.ok) {
+                        const errorData = await response.json();
+                        throw new Error(`API Error: ${response.status} - ${errorData.error ? errorData.error.message : 'Unknown error'}`);
+                    }
+
+                    const data = await response.json();
+                    const assistantReply = data.choices.message.content;
+
+                    conversationHistory.push({ role: 'assistant', content: assistantReply });
+                    displayMessage('assistant', assistantReply);
+
+                } catch (error) {
+                    console.error('API Error:', error);
+                    displayMessage('assistant', `<div class="narration-box-hs" style="border-color: #e57373; color: #d32f2f;">发生错误: ${error.message}</div>`);
+                } finally {
+                    sendButton.disabled = false;
+                    sendButton.innerHTML = '<i class="fas fa-paper-plane"></i>';
+                }
+            };
+
+
+            // --- Event Listeners ---
+            dockIcons.forEach(icon => icon.addEventListener('click', (e) => { e.preventDefault(); switchPage(icon.dataset.target); }));
+            contactLinks.forEach(link => link.addEventListener('click', (e) => { e.preventDefault(); switchPage(link.dataset.target); }));
+            backButtons.forEach(button => {
+                button.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    if (button.classList.contains('back-to-contacts')) switchPage('phone-screen-app');
+                    else if (button.classList.contains('back-to-twitter')) switchPage('twitter-screen');
+                });
+            });
+
+            startGameButton.addEventListener('click', saveSettingsAndStartGame);
+            
+            settingsBtn.addEventListener('click', (e) => { e.preventDefault(); switchPage('settings-screen'); });
+            saveIngameSettingsButton.addEventListener('click', saveInGameSettings);
+            
+            sendButton.addEventListener('click', sendMessageToAPI);
+            userInputField.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    sendMessageToAPI();
+                }
+            });
+
+            // Twitter UI Logic
+            if (playerProfileBtnHeader) playerProfileBtnHeader.addEventListener('click', (e) => { e.preventDefault(); switchPage('twitter-profile-player'); });
+            if (twitterMailBtn) twitterMailBtn.addEventListener('click', (e) => { e.preventDefault(); switchPage('twitter-mail-screen'); });
+            
+            const openModal = (data) => {
+                modalContent.querySelector('.modal-name').textContent = data.name;
+                modalContent.querySelector('.modal-age').textContent = `${data.age}岁`;
+                modalContent.querySelector('.modal-bio').textContent = data.bio;
+                const avatarDiv = modalContent.querySelector('.modal-avatar');
+                if (data.avatar) {
+                    avatarDiv.innerHTML = `<img src="${data.avatar}" alt="${data.name}">`;
+                } else {
+                    avatarDiv.innerHTML = ''; avatarDiv.style.backgroundColor = '#e0e0e0';
+                }
+                modalOverlay.style.display = 'flex';
+            };
+            
+            pollOptions.forEach(option => option.addEventListener('click', () => openModal({ name: option.dataset.name, age: option.dataset.age, bio: option.dataset.bio, avatar: option.dataset.avatar })));
+
+            const showProfilePage = (dataset) => {
+                const targetPage = document.getElementById('twitter-profile-page');
+                const { userName, userHandle, userBio, avatarUrl, avatarChar, followers = 0, following = 0 } = dataset;
+                targetPage.querySelector('.profile-name').textContent = userName;
+                targetPage.querySelector('.profile-handle').textContent = userHandle;
+                targetPage.querySelector('.profile-bio').textContent = userBio;
+                targetPage.querySelector('.followers-count').textContent = followers;
+                targetPage.querySelector('.following-count').textContent = following;
+                const profileAvatar = targetPage.querySelector('.profile-avatar');
+                profileAvatar.innerHTML = avatarUrl ? `<img src="${avatarUrl}" alt="${userName}">` : `<span>${avatarChar || '?'}</span>`;
+                switchPage('twitter-profile-page');
+            };
+
+            tweetAuthorLinks.forEach(link => link.addEventListener('click', (e) => { e.preventDefault(); e.stopPropagation(); showProfilePage(link.dataset); }));
+            
+            likeButtons.forEach(button => {
+                button.addEventListener('click', () => {
+                    const icon = button.querySelector('i');
+                    const textNode = Array.from(button.childNodes).find(node => node.nodeType === Node.TEXT_NODE && node.textContent.trim() !== '');
+                    if (!textNode) return;
+                    let currentLikesStr = textNode.textContent.trim();
+                    let num = currentLikesStr.endsWith('k') ? parseFloat(currentLikesStr.replace('k', '')) * 1000 : parseInt(currentLikesStr, 10);
+                    if (button.classList.contains('liked')) {
+                        button.classList.remove('liked');
+                        icon.classList.remove('fas'); icon.classList.add('far'); num -= 1;
+                    } else {
+                        button.classList.add('liked');
+                        icon.classList.remove('far'); icon.classList.add('fas'); num += 1;
+                    }
+                    let newLikesStr = num >= 1000 ? (num / 1000).toFixed(1).replace('.0', '') + 'k' : num;
+                    textNode.textContent = ` ${newLikesStr}`;
+                });
+            });
+
+            if(modalClose) modalClose.addEventListener('click', () => modalOverlay.style.display = 'none');
+            if(modalOverlay) modalOverlay.addEventListener('click', (e) => { if (e.target === modalOverlay) modalOverlay.style.display = 'none'; });
+
+            // --- Application Initialization ---
+            if (localStorage.getItem('gameSetupComplete') === 'true') {
+                initializeGameUI();
+            } else {
+                // By default, the setup screen is already active via HTML class
+            }
+        });
+    </script>
+</body>
+</html>
