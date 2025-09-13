@@ -1,0 +1,853 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>American High School Simulator /// 少女日常 v4.0</title>
+    
+    <!-- Fonts & Icons -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@700&family=Quicksand:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        :root {
+            --bg-color: #fdf6f9;
+            --panel-bg: rgba(255, 255, 255, 0.9);
+            --primary-color: #ff8fab;
+            --secondary-color: #a2d2ff;
+            --text-color: #5d5463;
+            --text-light: #a49daa;
+            --border-color: rgba(255, 143, 171, 0.2);
+            --twitter-blue: #1DA1F2;
+            --font-heading: 'Caveat', cursive;
+            --font-body: 'Quicksand', sans-serif;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        html, body {
+            height: 100%;
+            overflow: hidden;
+        }
+
+        body {
+            display: flex; justify-content: center; align-items: center;
+            min-height: 100vh; background-color: #e9e3f1;
+            font-family: var(--font-body); color: var(--text-color);
+        }
+
+        .phone-screen {
+            width: 375px; height: 100%;
+            max-height: 812px;
+            background-color: var(--bg-color);
+            border-radius: 30px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.15);
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            border: 8px solid #f0eaf8;
+        }
+        
+        .main-view { flex-grow: 1; position: relative; }
+        .app-page {
+            position: absolute; top: 0; left: 0;
+            width: 100%; height: 100%;
+            opacity: 0; visibility: hidden;
+            transition: opacity 0.4s ease, visibility 0.4s;
+            overflow-y: auto; background-color: var(--bg-color);
+            display: flex;
+            flex-direction: column;
+        }
+        .app-page.active { opacity: 1; visibility: visible; }
+        .app-page::-webkit-scrollbar { display: none; }
+        .app-page-content { padding: 20px; flex-grow: 1; }
+
+        .app-header {
+            font-family: var(--font-heading);
+            font-size: 20px;
+            text-align: center;
+            margin-bottom: 20px;
+            position: relative;
+            padding-bottom: 8px;
+            background: linear-gradient(45deg, var(--primary-color), var(--secondary-color));
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            display: inline-block;
+            text-shadow: 0 0 8px rgba(255, 143, 171, 0.7);
+        }
+        .app-header::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 40px;
+            height: 3px;
+            background: linear-gradient(90deg, var(--secondary-color), var(--primary-color));
+            border-radius: 2px;
+        }
+
+        .info-card {
+            background: white; padding: 15px;
+            border-radius: 12px; margin-bottom: 15px;
+            border: 1px solid var(--border-color);
+            text-align: left;
+        }
+        .card-title { font-size: 17px; font-weight: 700; margin-bottom: 10px; }
+        .card-content { font-size: 12px; line-height: 1.7; color: var(--text-light); }
+        .back-button {
+            position: absolute; top: 15px; left: 15px; font-size: 15px; color: var(--text-light);
+            background: rgba(255,255,255,0.5); width: 30px; height: 30px;
+            display: flex; align-items: center; justify-content: center;
+            border-radius: 50%; cursor: pointer; z-index: 10;
+        }
+        .section-header {
+            font-weight: 700;
+            color: var(--text-light);
+            margin: 25px 0 10px;
+            text-align: center;
+            font-size: 13px;
+        }
+        .action-button { width: 100%; padding: 12px; border-radius: 12px; border: none; background: linear-gradient(45deg, var(--primary-color), var(--secondary-color)); color: white; font-weight: 700; font-size: 15px; cursor: pointer; margin-top: 10px; }
+        .action-button:disabled { background: #ccc; cursor: not-allowed; }
+        .action-button.secondary { background: white; color: var(--primary-color); border: 1px solid var(--primary-color); }
+        
+        /* --- [NEW] Setup Screen --- */
+        #setup-screen .app-page-content { padding-top: 30px; }
+        .setup-form-group { margin-bottom: 15px; }
+        .setup-form-group label { display: block; font-size: 13px; font-weight: 700; color: var(--text-color); margin-bottom: 8px; text-align: left; }
+        .setup-form-group input, .setup-form-group textarea {
+            width: 100%; border: 1px solid var(--border-color); outline: none;
+            background: #fdfcff; padding: 10px 12px; border-radius: 8px;
+            font-size: 13px; font-family: var(--font-body); color: var(--text-color);
+            transition: border-color 0.2s ease, box-shadow 0.2s ease;
+        }
+        .setup-form-group textarea { resize: vertical; min-height: 60px; }
+        .setup-form-group input:focus, .setup-form-group textarea:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(255, 143, 171, 0.2);
+        }
+        .setup-button-group { display: grid; grid-template-columns: 1fr; gap: 10px; margin-top: 20px; }
+        #ai-gen-status { font-size: 12px; color: var(--text-light); text-align: center; margin-top: 10px; height: 15px; }
+
+
+        /* --- [STORY SCREEN] --- */
+        #story-screen { background: var(--bg-color); }
+        .player-stats-hs {
+            padding: 5px 15px; background: rgba(255, 255, 255, 0.7);
+            border-bottom: 1px solid var(--border-color);
+            position: sticky; top: 0; z-index: 10;
+            backdrop-filter: blur(8px);
+            flex-shrink: 0;
+        }
+        .player-header-hs { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 5px; font-size: 12px; }
+        .player-info-hs { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+        .player-info-hs .username { font-size: 18px; color: var(--text-color); }
+        .player-tag { font-size: 9px; background: var(--border-color); padding: 2px 5px; border-radius: 5px; font-weight: 700; color: var(--primary-color); }
+        .attributes-hs { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px 8px; font-size: 11px; }
+        .attr-hs { display: flex; justify-content: space-between; align-items: center; }
+        .attr-name-hs { color: var(--text-light); } .attr-name-hs span { margin-left: 2px; }
+        .attr-value-hs { font-weight: 500; color: var(--text-color); }
+        .content-panel-hs { padding: 15px; overflow-y: auto; flex-grow: 1; }
+        .content-panel-hs::-webkit-scrollbar { width: 4px; }
+        .content-panel-hs::-webkit-scrollbar-track { background: transparent; }
+        .content-panel-hs::-webkit-scrollbar-thumb { background: var(--primary-color); border-radius: 2px; }
+        .scene-info-container-hs { display: flex; justify-content: space-between; gap: 8px; margin-bottom: 20px; flex-wrap: wrap; row-gap: 8px; }
+        .info-box-hs { background: var(--panel-bg); border: 1px solid var(--border-color); padding: 5px 10px; border-radius: 15px; font-size: 11px; display: flex; align-items: center; gap: 6px; justify-content: center; font-weight: 500; flex-grow: 1; flex-basis: calc(50% - 4px); }
+        .info-box-hs i { color: var(--primary-color); }
+        .info-box-hs:last-child { flex-basis: 100%; }
+        .narration-box-hs { background: rgba(255, 255, 255, 0.6); border-left: 3px solid var(--secondary-color); padding: 12px; margin-bottom: 15px; font-style: italic; color: var(--text-light); font-size: 12px; line-height: 1.7; border-radius: 0 8px 8px 0; }
+        .dialogue-box-hs { background: white; border: 1px solid var(--border-color); padding: 12px; margin-bottom: 15px; border-radius: 12px; box-shadow: 0 4px 10px rgba(93, 84, 99, 0.05); display: flex; flex-direction: column; gap: 0; align-items: stretch; }
+        .dialogue-speaker-info { display: flex; gap: 10px; align-items: center; }
+        .dialogue-body-container { border-top: 1px solid var(--border-color); margin-top: 12px; padding-top: 12px; }
+        .dialogue-avatar-hs { width: 40px; height: 40px; border-radius: 50%; overflow: hidden; flex-shrink: 0; }
+        .dialogue-avatar-hs img { width: 100%; height: 100%; object-fit: cover; }
+        .dialogue-header-hs { font-family: var(--font-body); font-size: 14px; margin-bottom: 0; font-weight: 700; display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; }
+        .dialogue-body-hs p { font-size: 13px; line-height: 1.6; color: var(--text-color); }
+        .dialogue-body-hs p:not(:last-child) { margin-bottom: 8px; }
+        .char-npc .dialogue-header-hs { color: var(--primary-color); }
+        .self-dialogue .dialogue-header-hs { color: var(--secondary-color); }
+        .choices-container-hs { display: grid; grid-template-columns: 1fr; gap: 10px; margin: 20px 0; }
+        .choice-button-hs { width: 100%; padding: 12px; background: transparent; border: 1px solid var(--primary-color); color: var(--text-color); text-align: left; font-family: var(--font-body); font-size: 12px; font-weight: 500; cursor: pointer; transition: all 0.3s ease; border-radius: 8px; }
+        .choice-button-hs:hover { background: rgba(255, 143, 171, 0.15); }
+        .char-tags-container-hs { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 2px; }
+        .char-tag-hs { font-size: 9px; background-color: rgba(255, 143, 171, 0.1); color: var(--primary-color); padding: 2px 6px; border-radius: 10px; font-family: var(--font-body); border: 1px solid var(--border-color); font-weight: 700; }
+        
+        /* --- Schedule Screen etc. --- */
+        .date-weather-card { display: flex; justify-content: space-between; align-items: center; background: linear-gradient(135deg, #a2d2ff, #ff8fab); color: white; padding: 20px; border-radius: 15px; margin-bottom: 25px; box-shadow: 0 4px 15px rgba(162, 210, 255, 0.4); }
+        .date-info .day { font-size: 46px; font-weight: 700; line-height: 1; }
+        .date-info .month-year { font-size: 13px; font-weight: 500; opacity: 0.9; }
+        .weather-info { text-align: right; }
+        .weather-info .temperature { font-size: 26px; font-weight: 700; }
+        .weather-info .condition { font-size: 13px; opacity: 0.9; }
+        .schedule-item { display: flex; align-items: center; gap: 15px; }
+        .schedule-time { font-weight: 700; color: var(--primary-color); flex-shrink: 0; width: 70px; text-align: right; font-size: 12px; }
+        .schedule-details { border-left: 2px solid var(--border-color); padding-left: 15px; flex-grow: 1; }
+        .schedule-title { font-weight: 500; font-size: 0.75em; }
+        .event-card { font-size: 12px; padding: 12px 15px; }
+        .event-card .fa-bell { margin-right: 8px; color: var(--secondary-color); }
+
+        /* --- Phone Screen --- */
+        #phone-screen-app { overflow-y: hidden; }
+        #phone-screen-app > .app-page-content { overflow-y: auto; height: 100%; padding-top: 10px; }
+        .status-bar { padding: 5px 20px; display: flex; justify-content: space-between; align-items: center; font-size: 12px; font-weight: 500; flex-shrink: 0; color: var(--text-color); }
+        .status-icons { display: flex; gap: 8px; }
+        .contacts-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; padding-top: 5px; }
+        .contacts-header-title { font-size: 14px; color: var(--primary-color); font-weight: 700; padding-left: 5px; }
+        .contacts-header-actions { display: flex; gap: 15px; font-size: 15px; color: var(--text-light); padding-right: 5px; }
+        .contacts-header-actions i { cursor: pointer; transition: color 0.2s ease; }
+        .contacts-header-actions i:hover { color: var(--primary-color); }
+        .contact-entry { display: flex; align-items: center; gap: 15px; position: relative; }
+        .contact-link { cursor: pointer; }
+        .contact-avatar { width: 50px; height: 50px; border-radius: 50%; background-color: #eee; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 23px; font-family: var(--font-heading); color: var(--text-light); overflow: hidden; }
+        .contact-avatar img { width: 100%; height: 100%; object-fit: cover; }
+        .contact-name { font-weight: 700; font-size: 15px; display: flex; align-items: center; }
+        .favor-progress-text { font-size: 10px; color: var(--primary-color); font-weight: 700; margin-bottom: 2px; padding-right: 2px; text-align: right; }
+        .favor-bar { background-color: #f0eaf8; border-radius: 5px; height: 6px; overflow: hidden; }
+        .favor-level { background: linear-gradient(90deg, var(--secondary-color), var(--primary-color)); height: 100%; border-radius: 5px; transition: width 0.5s ease-in-out; }
+        .unread-badge-inline { display: inline-flex; background-color: var(--primary-color); color: white; width: 18px; height: 18px; border-radius: 50%; justify-content: center; align-items: center; font-size: 9px; font-weight: 700; margin-left: 8px; }
+
+        /* --- Chat Screen --- */
+        .chat-page-header-container { background: white; border-bottom: 1px solid var(--border-color); flex-shrink: 0; }
+        .chat-page-header-container .status-bar { padding: 1px 15px; font-size: 10px; }
+        .chat-header { display: flex; align-items: center; justify-content: center; padding: 10px 15px; background: transparent; border-bottom: none; position: relative; flex-shrink: 0; }
+        .chat-header .back-button { position: absolute; top: 50%; transform: translateY(-50%); left: 15px; background: transparent; }
+        .chat-header-title { font-weight: 700; font-size: 17px; }
+        .chat-log { padding: 15px; display: flex; flex-direction: column; gap: 10px; flex-grow: 1; overflow-y: auto; }
+        .chat-log::-webkit-scrollbar { display: none; }
+        .message-group { display: flex; flex-direction: row; align-items: flex-end; gap: 10px; max-width: 85%; }
+        .message-group.received { align-self: flex-start; }
+        .chat-avatar-in-chat { width: 35px; height: 35px; border-radius: 50%; overflow: hidden; flex-shrink: 0; }
+        .chat-avatar-in-chat img { width: 100%; height: 100%; object-fit: cover; }
+        .chat-bubble { padding: 10px 15px; border-radius: 18px; max-width: 100%; font-size: 13px; line-height: 1.6; }
+        .chat-bubble.received { background-color: white; border: 1px solid var(--border-color); align-self: flex-start; border-bottom-left-radius: 4px; }
+        
+        /* --- Achievements Screen --- */
+        #mirror-screen .app-page-content { padding-top: 10px; }
+        .achievement-card { background: white; padding: 15px; border-radius: 12px; margin-bottom: 12px; border: 1px solid var(--border-color); display: flex; align-items: center; gap: 15px; transition: all 0.3s ease; }
+        .achievement-icon { font-size: 24px; width: 50px; height: 50px; display: flex; justify-content: center; align-items: center; border-radius: 50%; background-color: var(--border-color); color: var(--primary-color); flex-shrink: 0; }
+        .achievement-title { font-weight: 700; font-size: 15px; margin-bottom: 5px; display: flex; align-items: baseline; }
+        .achievement-desc { font-size: 12px; color: var(--text-light); }
+        .achievement-timestamp { font-size: 9px; color: var(--text-light); font-weight: 400; margin-left: 8px; }
+
+        /* --- Twitter Screen --- */
+        #twitter-screen > .app-page-content { padding: 0; }
+        .twitter-sticky-header { position: sticky; top: 0; z-index: 6; background: rgba(253, 246, 249, 0.8); backdrop-filter: blur(10px); }
+        .twitter-top-bar { display: flex; justify-content: space-between; align-items: center; padding: 8px 15px; border-bottom: 1px solid var(--border-color); }
+        .twitter-header-actions { display: flex; gap: 20px; align-items: center;}
+        .twitter-action-btn { font-size: 14px; color: var(--text-light); cursor: pointer; transition: color 0.2s ease; }
+        .twitter-action-btn:hover { color: var(--twitter-blue); }
+        .twitter-nav-header { background: none !important; -webkit-background-clip: unset !important; background-clip: unset !important; color: var(--text-light) !important; text-shadow: none !important; margin-bottom: 0 !important; padding-bottom: 0 !important; font-family: var(--font-body) !important; font-size: 14px !important; font-weight: 700 !important; display: flex !important; align-items: center; gap: 8px; flex-grow: 1; justify-content: center; padding-left: 25px; }
+        .twitter-nav-header::after { display: none !important; }
+        .tweet-card { display: flex; gap: 12px; padding: 15px; border-bottom: 1px solid var(--border-color); background: white; text-align: left; }
+        .tweet-avatar { width: 45px; height: 45px; border-radius: 50%; background-color: #eee; flex-shrink: 0; overflow: hidden; }
+        .tweet-avatar img { width: 100%; height: 100%; object-fit: cover; }
+        .tweet-body { display: flex; flex-direction: column; width: 100%; }
+        .tweet-header { display: flex; align-items: baseline; gap: 5px; margin-bottom: 2px; }
+        .tweet-author { font-weight: 700; font-size: 14px; }
+        .tweet-handle { font-size: 12px; color: var(--text-light); }
+        #twitter-screen .tweet-author, #twitter-screen .tweet-handle { color: var(--primary-color); }
+        .tweet-content { font-size: 0.73em; line-height: 1.6; margin-bottom: 12px; white-space: pre-wrap; word-wrap: break-word; }
+        .tweet-actions { display: flex; justify-content: space-between; color: var(--text-light); font-size: 13px; }
+        
+        /* --- Settings Screen --- */
+        .settings-form-group { margin-bottom: 20px; }
+        .settings-form-group:last-of-type { margin-bottom: 0; }
+        .settings-form-group label { display: block; font-size: 13px; font-weight: 700; color: var(--text-color); margin-bottom: 8px; text-align: left; }
+        .settings-form-group input {
+            width: 100%; border: 1px solid var(--border-color); outline: none;
+            background: #fdfcff; padding: 10px 12px; border-radius: 8px;
+            font-size: 13px; font-family: var(--font-body); color: var(--text-color);
+            transition: border-color 0.2s ease, box-shadow 0.2s ease;
+        }
+        .settings-form-group input:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(255, 143, 171, 0.2);
+        }
+        #settings-screen .info-card { padding: 20px; }
+
+        /* --- Global Input Bar --- */
+        .global-input-bar { display: flex; padding: 5px 12px; border-top: 1px solid var(--border-color); background: white; flex-shrink: 0; align-items: center; gap: 8px; }
+        .global-input-bar input { flex-grow: 1; border: none; outline: none; background: #f7f7f7; padding: 8px 14px; border-radius: 20px; font-size: 13px; }
+        .global-input-bar button { border: none; background: none; font-size: 18px; color: var(--primary-color); cursor: pointer; padding: 0; flex-shrink: 0; }
+        .global-input-bar button:disabled { color: #ccc; cursor: not-allowed; }
+
+        /* --- App Dock --- */
+        .app-dock { flex-shrink: 0; height: 55px; background: rgba(255,255,255,0.6); backdrop-filter: blur(10px); border-top: 1px solid var(--border-color); display: flex; justify-content: space-around; align-items: center; }
+        .dock-icon { display: flex; flex-direction: column; align-items: center; gap: 4px; font-size: 8px; font-weight: 500; color: var(--text-light); cursor: pointer; transition: color 0.2s ease; text-decoration: none; position: relative; }
+        .dock-icon i { font-size: 19px; }
+        .dock-icon:hover, .dock-icon.active { color: var(--primary-color); }
+        .dock-icon[data-target="twitter-screen"]:hover, .dock-icon[data-target="twitter-screen"].active { color: var(--twitter-blue); }
+        
+        /* --- Notification Modal --- */
+        .notification-modal-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: none; justify-content: center; align-items: flex-start; padding-top: 80px; z-index: 2000; pointer-events: none; opacity: 0; transition: opacity 0.4s ease; }
+        .notification-modal-overlay.show { display: flex; opacity: 1; }
+        .notification-modal-content { color: white; padding: 12px 20px; border-radius: 20px; font-size: 13px; font-weight: 500; box-shadow: 0 4px 15px rgba(0,0,0,0.2); display: flex; align-items: center; gap: 8px; background: var(--primary-color); }
+    </style>
+</head>
+<body>
+
+    <div class="phone-screen">
+        
+        <main class="main-view">
+
+            <!-- NEW: Setup Screen (Starts here) -->
+            <div id="setup-screen" class="app-page active">
+                <div class="app-page-content">
+                    <div style="text-align: center;"><h1 class="app-header">创建你的角色</h1></div>
+                    <div class="info-card">
+                        <div class="setup-form-group">
+                            <label for="char-name">姓名</label>
+                            <input type="text" id="char-name" placeholder="输入你的名字">
+                        </div>
+                        <div class="setup-form-group">
+                            <label for="char-appearance">外貌描述</label>
+                            <textarea id="char-appearance" placeholder="例如：一头柔顺的银色长发，眼眸是神秘的紫色..."></textarea>
+                        </div>
+                        <div class="setup-form-group">
+                            <label for="char-personality">性格特点</label>
+                            <textarea id="char-personality" placeholder="例如：外表冷漠，内心细腻，有点小傲娇..."></textarea>
+                        </div>
+                        <div class="setup-form-group">
+                            <label for="char-background">身份背景</label>
+                            <textarea id="char-background" placeholder="例如：来自一个普通家庭，但似乎隐藏着什么秘密..."></textarea>
+                        </div>
+                        <div class="setup-form-group">
+                            <label for="char-relations">主要社交关系</label>
+                            <textarea id="char-relations" placeholder="例如：和莉莉是青梅竹马，和继兄西维恩关系微妙..."></textarea>
+                        </div>
+                    </div>
+                    <div class="setup-button-group">
+                        <button class="action-button" id="start-game-btn">开始游戏</button>
+                        <button class="action-button secondary" id="ai-generate-btn">
+                            <i class="fas fa-magic"></i> 使用AI生成
+                        </button>
+                    </div>
+                    <div id="ai-gen-status"></div>
+                    <div class="section-header" style="margin-top: 15px;">
+                        AI功能需要先在"手机"APP的设置中配置API信息
+                    </div>
+                </div>
+            </div>
+
+            <!-- Story Screen (Default) -->
+            <div id="story-screen" class="app-page">
+                <header class="player-stats-hs">
+                    <div class="player-header-hs">
+                        <div class="player-info-hs">
+                            <span class="username">Player</span>
+                            <div id="player-tags-container" style="display: contents;"></div>
+                        </div>
+                        <span class="currency">$0</span>
+                    </div>
+                    <div class="attributes-hs">
+                         <div class="attr-hs"><span class="attr-name-hs">🍎生命</span><span class="attr-value-hs">100</span></div>
+                        <div class="attr-hs"><span class="attr-name-hs">💔压力</span><span class="attr-value-hs">10</span></div>
+                        <div class="attr-hs"><span class="attr-name-hs">🍰心情</span><span class="attr-value-hs">80</span></div>
+                        <div class="attr-hs"><span class="attr-name-hs">🍙体魄</span><span class="attr-value-hs">50</span></div>
+                        <div class="attr-hs"><span class="attr-name-hs">🧠智力</span><span class="attr-value-hs">50</span></div>
+                        <div class="attr-hs"><span class="attr-name-hs">💬社交</span><span class="attr-value-hs">50</span></div>
+                        <div class="attr-hs"><span class="attr-name-hs">✨魅力</span><span class="attr-value-hs">50</span></div>
+                        <div class="attr-hs"><span class="attr-name-hs">🍀运气</span><span class="attr-value-hs">50</span></div>
+                    </div>
+                </header>
+
+                <main class="content-panel-hs" id="story-content-panel">
+                    <div class="scene-info-container-hs">
+                        <div class="info-box-hs"><i class="fas fa-map-marker-alt"></i><span>地点: 教学楼走廊</span></div>
+                        <div class="info-box-hs"><i class="fas fa-clock"></i><span>时间: 上午 10:00</span></div>
+                        <div class="info-box-hs"><i>🎀</i><span>衣着: 夏季校服</span></div>
+                    </div>
+
+                    <div class="narration-box-hs">
+                        <p>开学典礼刚刚结束，走廊里瞬间被喧闹的人潮填满。空气中弥漫着新书本的油墨味和少年少女们身上淡淡的香水味，一切都充满了崭新的气息。你穿梭在人群中，看着那些或熟悉或陌生的面孔，心中涌起一丝对新学期的期待。</p>
+                        <p>就在这时，一个熟悉的身影挤开人群，带着些许焦急的神色朝你跑来。是你的青梅，莉莉。</p>
+                    </div>
+                    <div class="dialogue-box-hs char-npc">
+                        <div class="dialogue-speaker-info">
+                            <div class="dialogue-avatar-hs">
+                                <img src="https://tc.z.wiki/autoupload/f/e1MqST8isN3BorZ9vl5wjMH-Rbcbu0PmzOeNUaCE-deyl5f0KlZfm6UsKj-HyTuv/20250907/2MyR/895X895/1757256685270_edit_1148797258847100.png" alt="莉莉">
+                            </div>
+                            <div class="dialogue-content-hs">
+                                <div class="dialogue-header-hs">
+                                    <span>莉莉</span>
+                                    <div class="char-tags-container-hs">
+                                        <span class="char-tag-hs">青梅</span>
+                                        <span class="char-tag-hs">文静</span>
+                                        <span class="char-tag-hs">优等生</span>
+                                        <span class="char-tag-hs">好感: 60</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="dialogue-body-container">
+                            <div class="dialogue-body-hs">
+                                <p>“啊，你终于来了！我给你发了好多消息......”</p>
+                                <p>她跑到你面前，微微喘着气，白皙的脸颊泛着红晕。</p>
+                                <p>“我，我还在为社团的事情烦恼。大家都好像有自己的目标了，只有我......”</p>
+                                <p>她有些不安地绞着手指，蓝色的眼眸里写满了犹豫。</p>
+                                <p>“你决定好了吗？我想和你一起......可以吗？”</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="choices-container-hs">
+                        <button class="choice-button-hs">A. 【安慰她】“别担心，我们一起去看看文学社怎么样？很适合你。”</button>
+                        <button class="choice-button-hs">B. 【实话实说】“我也还没想好，我们先到处逛逛再说吧。”</button>
+                        <button class="choice-button-hs">C. 【鼓励她】“我觉得你应该选自己真正喜欢的，比如天文社？不用总跟着我。”</button>
+                        <button class="choice-button-hs">D. 【开个玩笑】“选什么社团不重要，重要的是能和你一起摸鱼才对。”</button>
+                    </div>
+                </main>
+            </div>
+            
+            <!-- Schedule Screen -->
+            <div id="schedule-screen" class="app-page">
+                 <div class="app-page-content">
+                    <div style="text-align: center;"><h1 class="app-header">Schedule</h1></div>
+                    <div class="date-weather-card">
+                        <div class="date-info"><div class="day">05</div><div class="month-year">九月, 星期一</div></div>
+                        <div class="weather-info"><div class="temperature">24°</div><div class="condition">晴 ☀️ 纽约</div></div>
+                    </div>
+                    <div class="info-card schedule-item"><div class="schedule-time">08:30 AM</div><div class="schedule-details"><div class="schedule-title">开学典礼</div></div></div>
+                    <div class="info-card schedule-item"><div class="schedule-time">10:00 AM</div><div class="schedule-details"><div class="schedule-title">文学史</div></div></div>
+                </div>
+            </div>
+
+            <!-- Phone Screen -->
+            <div id="phone-screen-app" class="app-page">
+                <div class="status-bar"><span class="time">8:00</span><div class="status-icons"><i class="fas fa-signal"></i><i class="fas fa-wifi"></i><i class="fas fa-battery-full"></i></div></div>
+                <div class="app-page-content">
+                    <div class="contacts-header">
+                        <div class="contacts-header-title">联系人</div>
+                        <div class="contacts-header-actions">
+                            <i class="fas fa-cog" id="settings-btn"></i>
+                        </div>
+                    </div>
+                    <div class="info-card contact-entry contact-link" data-target="chat-screen-lily">
+                        <div class="contact-avatar"><img src="https://tc.z.wiki/autoupload/f/e1MqST8isN3BorZ9vl5wjMH-Rbcbu0PmzOeNUaCE-deyl5f0KlZfm6UsKj-HyTuv/20250907/2MyR/895X895/1757256685270_edit_1148797258847100.png" alt="莉莉"></div>
+                        <div class="contact-details">
+                            <div class="contact-name">莉莉 <span class="unread-badge-inline">6</span></div>
+                            <div class="favor-progress-text">好感 60/100</div>
+                            <div class="favor-bar"><div class="favor-level" style="width: 60%;"></div></div>
+                        </div>
+                    </div>
+                    <div class="info-card contact-entry contact-link" data-target="chat-screen-sivien">
+                        <div class="contact-avatar"><img src="https://tc.z.wiki/autoupload/f/e1MqST8isN3BorZ9vl5wjMH-Rbcbu0PmzOeNUaCE-deyl5f0KlZfm6UsKj-HyTuv/20250908/0xHF/2048X2048/33554273-608c-4628-93d1-68136e043317.jpeg/webp" alt="西维恩"></div>
+                        <div class="contact-details">
+                            <div class="contact-name">西维恩 <span class="unread-badge-inline">4</span></div>
+                            <div class="favor-progress-text">好感 50/100</div>
+                            <div class="favor-bar"><div class="favor-level" style="width: 50%;"></div></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Chat Screen for Lily -->
+            <div id="chat-screen-lily" class="app-page">
+                <div class="chat-page-header-container">
+                    <div class="status-bar"><span class="time">8:01</span><div class="status-icons"><i class="fas fa-signal"></i><i class="fas fa-wifi"></i><i class="fas fa-battery-full"></i></div></div>
+                    <div class="chat-header">
+                        <a class="back-button back-to-contacts"><i class="fas fa-arrow-left"></i></a>
+                        <div class="chat-header-title">莉莉</div>
+                    </div>
+                </div>
+                <div class="chat-log">
+                    <div class="message-group received">
+                        <div class="chat-avatar-in-chat"><img src="https://tc.z.wiki/autoupload/f/e1MqST8isN3BorZ9vl5wjMH-Rbcbu0PmzOeNUaCE-deyl5f0KlZfm6UsKj-HyTuv/20250907/2MyR/895X895/1757256685270_edit_1148797258847100.png" alt="莉莉"></div>
+                        <div class="chat-bubble received">你到学校了吗？</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Chat Screen for Sivien -->
+            <div id="chat-screen-sivien" class="app-page">
+                 <div class="chat-page-header-container">
+                    <div class="status-bar"><span class="time">8:01</span><div class="status-icons"><i class="fas fa-signal"></i><i class="fas fa-wifi"></i><i class="fas fa-battery-full"></i></div></div>
+                    <div class="chat-header">
+                        <a class="back-button back-to-contacts"><i class="fas fa-arrow-left"></i></a>
+                        <div class="chat-header-title">西维恩</div>
+                    </div>
+                </div>
+                <div class="chat-log">
+                    <div class="message-group received">
+                        <div class="chat-avatar-in-chat"><img src="https://tc.z.wiki/autoupload/f/e1MqST8isN3BorZ9vl5wjMH-Rbcbu0PmzOeNUaCE-deyl5f0KlZfm6UsKj-HyTuv/20250908/0xHF/2048X2048/33554273-608c-4628-93d1-68136e043317.jpeg/webp" alt="西维恩"></div>
+                        <div class="chat-bubble received">早上你没喝牛奶</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Mirror Screen / Achievements -->
+            <div id="mirror-screen" class="app-page">
+                <div class="app-page-content">
+                    <div style="text-align: center;"><h1 class="app-header">Achievements</h1></div>
+                    <div class="achievement-card">
+                        <div class="achievement-icon"><i class="fas fa-school"></i></div>
+                        <div class="achievement-details">
+                            <div class="achievement-title">
+                                <span>入学！</span>
+                                <span class="achievement-timestamp">2025-9-5-8:30AM</span>
+                            </div>
+                            <div class="achievement-desc">你开始了崭新的高中生活。</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Twitter Screen -->
+            <div id="twitter-screen" class="app-page">
+                <div class="app-page-content">
+                    <div class="twitter-sticky-header">
+                        <div class="status-bar"><span class="time">8:01</span><div class="status-icons"><i class="fas fa-signal"></i><i class="fas fa-wifi"></i><i class="fas fa-battery-full"></i></div></div>
+                        <div class="twitter-top-bar">
+                            <h1 class="app-header twitter-nav-header"><span class="nav-item active">▽附近</span></h1>
+                        </div>
+                    </div>
+                    <div class="tweet-list">
+                         <div class="tweet-card">
+                            <div class="tweet-avatar"><img src="https://tc-new.z.wiki/autoupload/f/e1MqST8isN3BorZ9vl5wjMH-Rbcbu0PmzOeNUaCE-deyl5f0KlZfm6UsKj-HyTuv/20250907/pdTS/1024X1024/1757256456724.png/webp" alt="薇薇安娜"></div>
+                            <div class="tweet-body">
+                                <div class="tweet-header"><span class="tweet-author">薇薇安娜</span><span class="tweet-handle">@Vivianna_Queen</span></div>
+                                <div class="tweet-content">舞会？不过是为我准备的又一场加冕礼罢了。期待看到你们为我尖叫的样子。</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Settings Screen -->
+            <div id="settings-screen" class="app-page">
+                <div class="app-page-content">
+                    <div class="chat-header" style="margin-bottom: 20px;">
+                        <a class="back-button back-to-contacts"><i class="fas fa-arrow-left"></i></a>
+                        <div class="chat-header-title">设置</div>
+                    </div>
+                    <div class="info-card">
+                        <div class="settings-form-group">
+                            <label for="api-endpoint">【API接口】</label>
+                            <input type="text" id="api-endpoint" name="api-endpoint" placeholder="例如: https://api.openai.com/v1">
+                        </div>
+                        <div class="settings-form-group">
+                            <label for="api-key">【API密钥】</label>
+                            <input type="password" id="api-key" name="api-key" placeholder="请输入你的API密钥">
+                        </div>
+                        <div class="settings-form-group">
+                            <label for="model-name">【模型】</label>
+                            <input type="text" id="model-name" name="model-name" placeholder="例如: gpt-4-turbo">
+                        </div>
+                    </div>
+                    <button id="save-settings-btn" class="action-button">保存设置</button>
+                </div>
+            </div>
+
+        </main>
+
+        <!-- Global Input Bar (Initially hidden) -->
+        <div class="global-input-bar" id="global-input-bar" style="display: none;">
+            <input type="text" id="user-input" placeholder="输入你的行动...">
+            <button id="send-btn"><i class="fas fa-paper-plane"></i></button>
+        </div>
+
+        <!-- App Dock (Initially hidden) -->
+        <nav class="app-dock" id="app-dock" style="display: none;">
+            <a href="#" class="dock-icon active" data-target="story-screen"><i class="fas fa-book-open"></i><span>故事</span></a>
+            <a href="#" class="dock-icon" data-target="schedule-screen"><i class="fas fa-calendar-alt"></i><span>日程</span></a>
+            <a href="#" class="dock-icon" data-target="phone-screen-app"><i class="fas fa-mobile-alt"></i><span>手机</span></a>
+            <a href="#" class="dock-icon" data-target="mirror-screen"><i class="fas fa-trophy"></i><span>成就</span></a>
+            <a href="#" class="dock-icon" data-target="twitter-screen"><i class="fab fa-twitter"></i><span>推特</span></a>
+        </nav>
+        
+        <!-- Notification Modal -->
+        <div id="notification-modal" class="notification-modal-overlay">
+            <div class="notification-modal-content">
+                <p id="notification-text"></p>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // --- DOM Element References ---
+            const dockIcons = document.querySelectorAll('.dock-icon');
+            const appPages = document.querySelectorAll('.app-page');
+            const contactLinks = document.querySelectorAll('.contact-link');
+            const backButtons = document.querySelectorAll('.back-button');
+            const settingsBtn = document.getElementById('settings-btn');
+            
+            // NEW: Setup Screen Elements
+            const setupScreen = document.getElementById('setup-screen');
+            const startGameBtn = document.getElementById('start-game-btn');
+            const aiGenerateBtn = document.getElementById('ai-generate-btn');
+            const aiGenStatus = document.getElementById('ai-gen-status');
+            const charNameInput = document.getElementById('char-name');
+            const charAppearanceInput = document.getElementById('char-appearance');
+            const charPersonalityInput = document.getElementById('char-personality');
+            const charBackgroundInput = document.getElementById('char-background');
+            const charRelationsInput = document.getElementById('char-relations');
+            
+            // NEW: Main Game UI Elements
+            const appDock = document.getElementById('app-dock');
+            const globalInputBar = document.getElementById('global-input-bar');
+            const storyContentPanel = document.getElementById('story-content-panel');
+            const userInput = document.getElementById('user-input');
+            const sendBtn = document.getElementById('send-btn');
+            const usernameDisplay = document.querySelector('.username');
+            const playerTagsContainer = document.getElementById('player-tags-container');
+
+            // NEW: Settings Screen Elements
+            const saveSettingsBtn = document.getElementById('save-settings-btn');
+            const apiEndpointInput = document.getElementById('api-endpoint');
+            const apiKeyInput = document.getElementById('api-key');
+            const modelNameInput = document.getElementById('model-name');
+
+            // NEW: Notification Elements
+            const notificationModal = document.getElementById('notification-modal');
+            const notificationText = document.getElementById('notification-text');
+
+            // --- Global State ---
+            let playerCharacter = {};
+            let apiSettings = {};
+            let messageHistory = []; // To store conversation for context
+
+            // --- Utility Functions ---
+            const switchPage = (targetId) => {
+                appPages.forEach(page => page.classList.toggle('active', page.id === targetId));
+                dockIcons.forEach(icon => {
+                    icon.classList.toggle('active', icon.dataset.target === targetId);
+                });
+            };
+
+            const showNotification = (message, duration = 3000) => {
+                notificationText.textContent = message;
+                notificationModal.classList.add('show');
+                setTimeout(() => {
+                    notificationModal.classList.remove('show');
+                }, duration);
+            };
+
+            // --- API Functionality ---
+            const loadApiSettings = () => {
+                const savedSettings = localStorage.getItem('apiSettings');
+                if (savedSettings) {
+                    apiSettings = JSON.parse(savedSettings);
+                    apiEndpointInput.value = apiSettings.endpoint || '';
+                    apiKeyInput.value = apiSettings.key || '';
+                    modelNameInput.value = apiSettings.model || '';
+                }
+            };
+
+            const saveApiSettings = () => {
+                apiSettings = {
+                    endpoint: apiEndpointInput.value.trim(),
+                    key: apiKeyInput.value.trim(),
+                    model: modelNameInput.value.trim()
+                };
+                localStorage.setItem('apiSettings', JSON.stringify(apiSettings));
+                showNotification('设置已保存！');
+            };
+            
+            const callApi = async (messages) => {
+                if (!apiSettings.endpoint || !apiSettings.key || !apiSettings.model) {
+                    showNotification('请先在手机设置中配置API信息');
+                    return null;
+                }
+                
+                sendBtn.disabled = true;
+                userInput.disabled = true;
+                userInput.placeholder = "等待AI回应中...";
+
+                try {
+                    const response = await fetch(apiSettings.endpoint, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${apiSettings.key}`
+                        },
+                        body: JSON.stringify({
+                            model: apiSettings.model,
+                            messages: messages,
+                            stream: false // For simplicity, we are not using streaming
+                        })
+                    });
+
+                    if (!response.ok) {
+                        throw new Error(`API请求失败: ${response.status} ${response.statusText}`);
+                    }
+
+                    const data = await response.json();
+                    return data.choices[0].message.content;
+
+                } catch (error) {
+                    console.error('API Call Error:', error);
+                    showNotification(`API错误: ${error.message}`);
+                    return null;
+                } finally {
+                    sendBtn.disabled = false;
+                    userInput.disabled = false;
+                    userInput.placeholder = "输入你的行动...";
+                }
+            };
+
+            // --- Character Setup Functionality ---
+            const handleAiGenerate = async () => {
+                aiGenerateBtn.disabled = true;
+                aiGenStatus.textContent = '正在向AI请求角色设定...';
+
+                const prompt = `请为一款名为《American High School Simulator》的文字冒险游戏，创建一个富有想象力的女性主角设定。请严格按照以下JSON格式返回，不要包含任何额外的解释或Markdown标记：
+{
+  "name": "角色的名字",
+  "appearance": "对外貌的生动描述，例如发色、瞳色、常见衣着风格等。",
+  "personality": "对性格的详细描述，可以包含一些矛盾的特质，使其更立体。",
+  "background": "角色的家庭背景、成长经历或隐藏的秘密。",
+  "relations": "角色开局时已有的重要社交关系，例如和谁是青梅竹马，和谁关系紧张等。"
+}`;
+                
+                const messages = [{ role: 'user', content: prompt }];
+                const response = await callApi(messages);
+
+                if (response) {
+                    try {
+                        // Clean the response to ensure it's valid JSON
+                        const jsonString = response.match(/\{[\s\S]*\}/)[0];
+                        const charData = JSON.parse(jsonString);
+                        
+                        charNameInput.value = charData.name || '';
+                        charAppearanceInput.value = charData.appearance || '';
+                        charPersonalityInput.value = charData.personality || '';
+                        charBackgroundInput.value = charData.background || '';
+                        charRelationsInput.value = charData.relations || '';
+                        aiGenStatus.textContent = '角色生成成功！';
+                    } catch (e) {
+                        console.error("解析AI返回的JSON失败:", e);
+                        aiGenStatus.textContent = 'AI返回格式有误，请重试。';
+                    }
+                } else {
+                    aiGenStatus.textContent = '生成失败，请检查API设置或网络。';
+                }
+                
+                aiGenerateBtn.disabled = false;
+            };
+
+            const handleStartGame = () => {
+                const name = charNameInput.value.trim();
+                if (!name) {
+                    showNotification('请输入你的名字！');
+                    return;
+                }
+                
+                playerCharacter = {
+                    name: name,
+                    appearance: charAppearanceInput.value.trim(),
+                    personality: charPersonalityInput.value.trim(),
+                    background: charBackgroundInput.value.trim(),
+                    relations: charRelationsInput.value.trim(),
+                };
+
+                // Update UI
+                usernameDisplay.textContent = playerCharacter.name;
+                // Simple tag generation from personality
+                const tags = playerCharacter.personality.split(/[,，、\s]+/).slice(0, 2);
+                playerTagsContainer.innerHTML = '';
+                tags.forEach(tag => {
+                    if(tag) {
+                         const tagEl = document.createElement('span');
+                         tagEl.className = 'player-tag';
+                         tagEl.textContent = `性格: ${tag}`;
+                         playerTagsContainer.appendChild(tagEl);
+                    }
+                });
+                
+                // Hide setup screen and show game UI
+                setupScreen.classList.remove('active');
+                appDock.style.display = 'flex';
+                globalInputBar.style.display = 'flex';
+                
+                // Initialize conversation history with character sheet
+                const systemPrompt = `你现在是一个文字冒险游戏（TRPG）的主持人（GM）。游戏背景是现代美国高中。
+玩家的角色设定如下：
+- 姓名: ${playerCharacter.name}
+- 外貌: ${playerCharacter.appearance}
+- 性格: ${playerCharacter.personality}
+- 背景: ${playerCharacter.background}
+- 社交关系: ${playerCharacter.relations}
+
+你的任务是：
+1.  生动地描绘游戏世界、场景和NPC。
+2.  根据玩家的输入，推动故事发展。
+3.  以旁白或NPC对话的形式进行回应。
+4.  你的回应应该简洁而富有戏剧性。
+5.  如果需要提供选项，请在回应的最后以"[A] 选项一 [B] 选项二"的格式给出。
+6.  你的所有回应都将直接作为游戏内容展示，所以不要说任何游戏外的话，例如“好的，接下来...”。直接开始描述场景或对话。
+
+游戏现在开始。这是开场剧情，请根据这个情景，等待并回应玩家的第一个动作。`;
+
+                messageHistory = [
+                    { role: 'system', content: systemPrompt },
+                    { role: 'assistant', content: document.querySelector('.narration-box-hs').textContent + document.querySelector('.dialogue-box-hs .dialogue-body-hs').textContent }
+                ];
+
+                // Switch to the story screen
+                switchPage('story-screen');
+            };
+
+            // --- Game Loop (User Input Handling) ---
+            const handleUserInput = async () => {
+                const text = userInput.value.trim();
+                if (!text) return;
+                
+                // Add user action to UI
+                const userActionHtml = `<div class="narration-box-hs" style="border-left-color: var(--primary-color); text-align: right; background: rgba(255, 143, 171, 0.05);"><p><strong>你：</strong>${text}</p></div>`;
+                storyContentPanel.innerHTML += userActionHtml;
+                
+                // Add to message history
+                messageHistory.push({ role: 'user', content: text });
+                userInput.value = '';
+
+                // Call API for game response
+                const gameResponse = await callApi(messageHistory);
+
+                if (gameResponse) {
+                    // Add AI response to history
+                    messageHistory.push({ role: 'assistant', content: gameResponse });
+                    
+                    // Add game response to UI (as narration for simplicity)
+                    const gameResponseHtml = `<div class="narration-box-hs"><p>${gameResponse.replace(/\n/g, '</p><p>')}</p></div>`;
+                    storyContentPanel.innerHTML += gameResponseHtml;
+                }
+                
+                // Auto-scroll to bottom
+                storyContentPanel.scrollTop = storyContentPanel.scrollHeight;
+            };
+
+            // --- Event Listeners ---
+            dockIcons.forEach(icon => icon.addEventListener('click', (e) => { e.preventDefault(); switchPage(icon.dataset.target); }));
+            contactLinks.forEach(link => link.addEventListener('click', (e) => { e.preventDefault(); switchPage(link.dataset.target); }));
+            backButtons.forEach(button => {
+                button.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    if (button.classList.contains('back-to-contacts')) switchPage('phone-screen-app');
+                });
+            });
+            settingsBtn.addEventListener('click', (e) => { e.preventDefault(); switchPage('settings-screen'); });
+            
+            // NEW Listeners
+            startGameBtn.addEventListener('click', handleStartGame);
+            aiGenerateBtn.addEventListener('click', handleAiGenerate);
+            saveSettingsBtn.addEventListener('click', saveApiSettings);
+            sendBtn.addEventListener('click', handleUserInput);
+            userInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    handleUserInput();
+                }
+            });
+
+            // --- Initialization ---
+            loadApiSettings();
+            // The game starts on the setup screen by default (it has the 'active' class in HTML)
+        });
+    </script>
+</body>
+</html>
